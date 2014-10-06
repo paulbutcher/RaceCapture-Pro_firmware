@@ -22,6 +22,7 @@
 #define _GEOCIRCLE_H_
 
 #include "geopoint.h"
+#include "gps.h"
 
 #include <stdbool.h>
 
@@ -50,5 +51,33 @@ bool gc_isPointInGeoCircle(const GeoPoint point, const struct GeoCircle gc);
  * @return true if its a valid geoCircle, false otherwise.
  */
 bool gc_isValidGeoCircle(const struct GeoCircle gc);
+
+struct GeoCircleBoundary {
+   struct TinyTimeLoc samples[3];
+   struct GeoCircle gc;
+   bool gcBreached;
+   bool gcbCrossed;
+};
+
+/**
+ * Creates a GeoCircleBoundary struct and returns it properly configured.
+ * @param gc The GeoCircle that represents this boundary.
+ * @return A shiny GeoCircleBoundary struct.
+ */
+struct GeoCircleBoundary gc_createGeoCircleBoundary(const struct GeoCircle gc);
+
+/**
+ * Adds a TimeLoc sample to our boundary detection logic.
+ * @param gcb The GeoCircleBoundary structure in play.
+ * @param tl The time location object being added.
+ * @return true if the boundary has been crossed, false otherwise.
+ * @see gc_getBoundCrossingTimeLoc for info on when it was crossed.
+ */
+bool gc_addTinyTimeLocSample(struct GeoCircleBoundary *gcb, struct TinyTimeLoc tl);
+
+/**
+ * @return A TinyTimeLoc structure containing the time the boundary was crossed.
+ */
+struct TinyTimeLoc gc_getBoundCrossingTimeLoc(const struct GeoCircleBoundary *gcb);
 
 #endif /* _GEOCIRCLE_H_ */

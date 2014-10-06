@@ -28,6 +28,11 @@ typedef struct _TimeLoc {
 	millis_t time;
 } TimeLoc;
 
+struct TinyTimeLoc {
+   GeoPoint point;
+   tiny_millis_t millis;
+};
+
 void gpsConfigChanged(void);
 
 void initGPS();

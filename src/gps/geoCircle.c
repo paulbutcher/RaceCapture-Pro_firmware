@@ -20,6 +20,8 @@
 
 #include "geoCircle.h"
 #include "geopoint.h"
+#include "gps.h"
+#include "mod_string.h"
 #include "tracks.h"
 
 struct GeoCircle gc_createGeoCircle(const GeoPoint gp, const float r) {
@@ -37,4 +39,50 @@ bool gc_isPointInGeoCircle(const GeoPoint point, const struct GeoCircle gc) {
 
 bool gc_isValidGeoCircle(const struct GeoCircle gc) {
    return isValidPoint(&(gc.point)) && gc.radius > 0.0;
+}
+
+struct GeoCircleBoundary gc_createGeoCircleBoundary(const struct GeoCircle gc) {
+   struct GeoCircleBoundary gcb;
+
+   memset(&gcb, 0, sizeof(struct GeoCircleBoundary));
+   gcb.gc = gc;
+
+   return gcb;
+}
+
+static bool isGeoCircleBoundaryValid(const struct GeoCircleBoundary *gcb) {
+   return gc_isValidGeoCircle(gcb->gc);
+}
+
+bool gc_addTinyTimeLocSample(struct GeoCircleBoundary *gcb, struct TinyTimeLoc tl) {
+   if (gcb->gcbCrossed)
+      return true;
+
+   if (!isGeoCircleBoundaryValid(gcb))
+      return false;
+
+   if (!gcb->gcBreached && !gc_isPointInGeoCircle(tl.point, gcb->gc))
+      return false;
+
+   // If here GeoCircle Breached.  We are recording!
+   gcb->gcBreached = true;
+
+   // TODO: Use memmove here like a civilized programmer?
+   gcb->samples[2] = gcb->samples[1];
+   gcb->samples[1] = gcb->samples[0];
+   gcb->samples[0] = tl;
+
+   // Cant check if we crossed the bound with only one sample.  Need more info.
+   if (!isValidPoint(&(gcb->samples[1].point)))
+      return false;
+
+   const float dist1 = distPythag(&(gcb->samples[1].point), &(gcb->gc.point));
+   const float dist0 = distPythag(&(gcb->samples[0].point), &(gcb->gc.point));
+
+   return gcb->gcbCrossed = dist1 < dist0;
+}
+
+struct TinyTimeLoc gc_getBoundCrossingTimeLoc(const struct GeoCircleBoundary *gcb) {
+   struct TinyTimeLoc ttl;
+   return ttl;
 }
