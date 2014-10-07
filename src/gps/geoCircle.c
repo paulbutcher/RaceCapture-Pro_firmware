@@ -72,8 +72,8 @@ bool gc_addTinyTimeLocSample(struct GeoCircleBoundary *gcb, struct TinyTimeLoc t
    gcb->samples[1] = gcb->samples[0];
    gcb->samples[0] = tl;
 
-   // Cant check if we crossed the bound with only one sample.  Need more info.
-   if (!isValidPoint(&(gcb->samples[1].point)))
+   // Need 3 samples.  If we don't have 3, then we aren't ready.
+   if (!isValidPoint(&(gcb->samples[2].point)))
       return false;
 
    const float dist1 = distPythag(&(gcb->samples[1].point), &(gcb->gc.point));
@@ -82,7 +82,65 @@ bool gc_addTinyTimeLocSample(struct GeoCircleBoundary *gcb, struct TinyTimeLoc t
    return gcb->gcbCrossed = dist1 < dist0;
 }
 
+static float sq(float a) {
+   return a * a;
+}
+
 struct TinyTimeLoc gc_getBoundCrossingTimeLoc(const struct GeoCircleBoundary *gcb) {
-   struct TinyTimeLoc ttl;
-   return ttl;
+   struct TinyTimeLoc sideA;
+   struct TinyTimeLoc sideB;
+
+   // Zero out sideA because we may return it without setting values.
+   memset(&sideA, 0, sizeof(struct TinyTimeLoc));
+
+   if (!gcb->gcbCrossed)
+      return sideA;
+
+   /*
+    * Now we find the two closest points to the circle center.  If done
+    * correctly the middle point (index 1) will be the closest, we just need
+    * to figure out which of the outter two is closer.
+    */
+   const float dist0 = distPythag(&(gcb->samples[0].point), &(gcb->gc.point));
+   const float dist1 = distPythag(&(gcb->samples[1].point), &(gcb->gc.point));
+   const float dist2 = distPythag(&(gcb->samples[2].point), &(gcb->gc.point));
+
+   /*
+    * Sanity check.  If dist1 isn't the shortest distance, then things have
+    * gone wrong.  To handle those corner cases, we will simply return the
+    * closest timeloc to the center of the GeoCircle.
+    */
+   if (dist0 < dist1)
+      return gcb->samples[0];
+   if (dist2 < dist1)
+      return gcb->samples[2];
+
+   /*
+    * If here we are in a sane state.  Set sideA to be before the boundary
+    * and sideB after.  Then do the math using law of cosines + assumption that
+    * user will cross boundary at ~90 degrees to boundary.
+    */
+   if (dist0 < dist2) {
+      sideB = gcb->samples[0];
+      sideA = gcb->samples[1];
+   } else {
+      sideB = gcb->samples[1];
+      sideA = gcb->samples[2];
+   }
+
+   /*
+    * A and B are points sides A and B.  C is the center of our circle.
+    */
+   const float distAB = distPythag(&sideA.point, &sideB.point);
+   const float distAC = distPythag(&sideA.point, &gcb->gc.point);
+   const float distBC = distPythag(&sideB.point, &(gcb->gc.point));
+   const float cosTheta = (sq(distAB) + sq(distAC) - sq(distBC)) /
+      (2 * distAB * distAC);
+   const float pct = cosTheta * distAC / distAB;
+
+   sideA.point.latitude += (sideB.point.latitude - sideA.point.latitude) * pct;
+   sideA.point.longitude += (sideB.point.longitude - sideA.point.longitude) * pct;
+   sideA.millis += (tiny_millis_t) ((sideB.millis - sideA.millis) * pct);
+
+   return sideA;
 }
