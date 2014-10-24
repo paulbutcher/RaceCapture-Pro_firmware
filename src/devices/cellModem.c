@@ -145,7 +145,12 @@ int configureNet(Serial *serial, const char *apnHost, const char *apnUser, const
 	putsCell(serial, "\"\r");
 	if (!waitCommandResponse(serial, READ_TIMEOUT)) return -2;
 
-//	if (!sendCommand("AT+CIPHEAD=1\r")) return -2;
+   //	if (!sendCommand("AT+CIPHEAD=1\r")) return -2;
+
+   // Configure DNS to use Google DNS
+   const char dnsCmd[] = "AT+CDNSCFG=\"8.8.8.8\",\"8.8.4.4\"\r";
+   if (!sendCommandWait(serial, dnsCmd, READ_TIMEOUT))
+      return -3;
 
 	if (!sendCommandWait(serial, "AT+CIICR\r", CONNECT_TIMEOUT)) return -4;
 
