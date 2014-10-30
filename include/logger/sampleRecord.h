@@ -17,16 +17,26 @@
 #define LOGGER_MSG_START_LOG 1
 #define LOGGER_MSG_END_LOG   2
 
+enum SampleData {
+   SampleData_Float,
+   SampleData_Int,
+   SampleData_LongLong,
+};
 
 typedef struct _ChannelSample {
    unsigned short channelId;
    unsigned short sampleRate;
    size_t channelIndex;
-   float (*get_sample)(int);
+   enum SampleData sampleData;
    union {
-      int intValue;
-      float floatValue;
-      long long llValue;
+      int (*get_int_sample)(int);
+      float (*get_float_sample)(int);
+      long long (*get_ll_sample)(int);
+   };
+   union {
+      int valueInt;
+      float valueFloat;
+      long long valueLongLong;
    };
 } ChannelSample;
 
