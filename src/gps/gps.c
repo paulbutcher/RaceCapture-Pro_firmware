@@ -71,7 +71,8 @@ static float g_distance;
  */
 static DateTime g_dtFirstFix;
 static DateTime g_dtLastFix;
-static millis_t g_millisSinceUnixEpoch;
+static millis_t g_utcMillisAtSample;
+static tiny_millis_t g_uptimeAtSample;
 
 static bool isGpsSignalUsable(enum GpsSignalQuality q) {
    return q != GPS_QUALITY_NO_FIX;
@@ -81,7 +82,7 @@ static bool isGpsSignalUsable(enum GpsSignalQuality q) {
  * @return true if we haven't parsed any data yet, false otherwise.
  */
 static bool isGpsDataCold() {
-   return g_millisSinceUnixEpoch == 0;
+   return g_utcMillisAtSample == 0;
 }
 
 GeoPoint getGeoPoint() {
@@ -93,12 +94,24 @@ GeoPoint getGeoPoint() {
    return gp;
 }
 
-void updateMillisSinceEpoch(DateTime fixDateTime) {
-   g_millisSinceUnixEpoch = getMillisecondsSinceUnixEpoch(fixDateTime);
+static void updateMillisSinceEpoch(DateTime fixDateTime) {
+   g_utcMillisAtSample = getMillisecondsSinceUnixEpoch(fixDateTime);
 }
 
 millis_t getMillisSinceEpoch() {
-   return g_millisSinceUnixEpoch;
+   if (isGpsDataCold())
+      return 0;
+
+   tiny_millis_t deltaSinceSample = getUptime() - g_uptimeAtSample;
+   return g_utcMillisAtSample + deltaSinceSample;
+}
+
+static void updateUptimeAtSample() {
+   g_uptimeAtSample = getUptime();
+}
+
+tiny_millis_t getUptimeAtSample() {
+   return g_uptimeAtSample;
 }
 
 /**
@@ -107,6 +120,7 @@ millis_t getMillisSinceEpoch() {
  * @param fixDateTime The DateTime of the GPS fix.
  */
 void updateFullDateTime(DateTime fixDateTime) {
+   updateUptimeAtSample();
    g_dtLastFix = fixDateTime;
    if (g_dtFirstFix.year == 0)
       g_dtFirstFix = fixDateTime;
@@ -570,7 +584,7 @@ void gpsConfigChanged(void) {
 void initGPS() {
    g_configured = 0;
    g_activeTrack = NULL;
-   g_millisSinceUnixEpoch = 0;
+   g_utcMillisAtSample = 0;
    g_flashCount = 0;
    g_prevLatitude = 0.0;
    g_prevLongitude = 0.0;
@@ -731,7 +745,7 @@ void processGPSData(char *gpsData, size_t len) {
 
    if (TRACE_LEVEL){
 	   char output[30];
-	   modp_ultoa10(g_millisSinceUnixEpoch, output);
+	   modp_ultoa10(g_utcMillisAtSample, output);
 	   pr_debug(output);
 	   pr_debug(" ");
 	   modp_ftoa(g_latitude, output, 10);

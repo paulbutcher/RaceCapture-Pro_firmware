@@ -41,9 +41,26 @@ int populate_sample_buffer(ChannelSample * samples,  size_t count, size_t curren
 	return highestRate;
 }
 
-
 void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samples, size_t channelCount){
-	ChannelSample *sample = samples;
+   ChannelSample *sample = samples;
+   const unsigned int highSampleRate = getHighestSampleRate(loggerConfig);
+
+   /*
+    * This sets up immutable channels.  These channels are channels that are always
+    * present.  They are always the first 2 channels, with the most reliable (uptime)
+    * being the first channel.
+    */
+   for (int i=0; i < CONFIG_TIME_CHANNELS; ++i, ++sample) {
+
+      struct TimeConfig *tc = &(loggerConfig->TimeConfigs[i]);
+      ChannelConfig *cc = &(tc->cfg);
+      sample->channelId = cc->channeId;
+      sample->channelIndex = i;
+      sample->get_sample = get_time_sample;
+
+      //Always use the highestSampleRate for our Time values.
+      sample->sampleRate = highSampleRate;
+   }
 
 	for (int i=0; i < CONFIG_ADC_CHANNELS; i++){
 		ADCConfig *config = &(loggerConfig->ADCConfigs[i]);
@@ -278,6 +295,24 @@ float get_mapped_value(float value, ScalingMap *scalingMap){
 	float y2 = scalingMap->scaledValues[nextBin];
 	float scaled = LinearInterpolate(value,x1,y1,x2,y2);
 	return scaled;
+}
+
+float get_time_sample(int index) {
+   const LoggerConfig * loggerConfig = getWorkingLoggerConfig();
+   const struct TimeConfig *tc = &(loggerConfig->TimeConfigs[index]);
+   enum TimeType tt = tc->tt;
+
+   switch(tt) {
+   case TimeType_Uptime:
+      // XXX: This won't work.  Temporary only.
+      return (float) getUptime();
+   case TimeType_UtcMillis:
+      // XXX: This won't work.  Temporary only.
+      return (float) getMillisSinceEpoch();
+   }
+
+   // Should never get here.
+   return -1.0;
 }
 
 float get_analog_sample(int channelId){

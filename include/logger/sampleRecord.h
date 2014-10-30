@@ -18,17 +18,16 @@
 #define LOGGER_MSG_END_LOG   2
 
 
-typedef struct _ChannelSample
-	{
-	unsigned short channelId;
-	unsigned short sampleRate;
-	size_t channelIndex;
-	float (*get_sample)(int);
-	union
-	{
-		int intValue;
-		float floatValue;
-	};
+typedef struct _ChannelSample {
+   unsigned short channelId;
+   unsigned short sampleRate;
+   size_t channelIndex;
+   float (*get_sample)(int);
+   union {
+      int intValue;
+      float floatValue;
+      long long llValue;
+   };
 } ChannelSample;
 
 typedef struct _LoggerMessage

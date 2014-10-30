@@ -91,7 +91,7 @@ void setGPSSpeed(float speed);
 DateTime getLastFixDateTime();
 
 /**
- * @return Milliseconds since Unix Epoch.
+ * @return Milliseconds since Unix Epoch.  0 indicates not available.
  */
 millis_t getMillisSinceEpoch();
 
@@ -111,5 +111,10 @@ GeoPoint getGeoPoint();
  * @return Milliseconds since our first fix.
  */
 tiny_millis_t getMillisSinceFirstFix();
+
+/**
+ * @return The uptime when our most recent GPS sample was taken.  0 indicates no sample.
+ */
+tiny_millis_t getUptimeAtSample();
 
 #endif /*GPS_H_*/
