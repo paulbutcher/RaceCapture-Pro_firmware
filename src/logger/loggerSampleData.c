@@ -71,8 +71,9 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
 
    /*
     * This sets up immutable channels.  These channels are channels that are always
-    * present.  They are always the first 2 channels, with the most reliable (uptime)
-    * being the first channel.
+    * present.  They are always the first 2 channels, with the most reliable (Interval)
+    * being the first channel.  Utc only works when we get synchronization from an external
+    * clock.
     */
       struct TimeConfig *tc = &(loggerConfig->TimeConfigs[0]);
       ChannelConfig *cc = &(tc->cfg);
@@ -82,6 +83,7 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
       sample->sampleData = SampleData_Int;
       //Always use the highestSampleRate for our Time values.
       sample->sampleRate = highSampleRate;
+      ++sample;
 
       tc = &(loggerConfig->TimeConfigs[1]);
       cc = &(tc->cfg);
@@ -91,7 +93,7 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
       sample->get_ll_sample = get_utc_sample;
       //Always use the highestSampleRate for our Time values.
       sample->sampleRate = highSampleRate;
-
+      ++sample;
 
 	for (int i=0; i < CONFIG_ADC_CHANNELS; i++){
 		ADCConfig *config = &(loggerConfig->ADCConfigs[i]);

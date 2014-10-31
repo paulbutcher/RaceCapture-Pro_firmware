@@ -8,6 +8,8 @@
 #include "ADC.h"
 #include "imu.h"
 #include "gps.h"
+#include "task.h"
+#include "capabilities.h"
 
 #include <string>
 
@@ -31,6 +33,7 @@ void SampleRecordTest::tearDown()
 
 void SampleRecordTest::testPopulateSampleRecord(){
 	LoggerConfig *lc = getWorkingLoggerConfig();
+   initGPS();
 
 	//mock up some values to test later
 	lc->ADCConfigs[7].scalingMode = SCALING_MODE_RAW;
@@ -41,7 +44,17 @@ void SampleRecordTest::testPopulateSampleRecord(){
 	ChannelSample * samples = create_channel_sample_buffer(lc, channelCount);
 	init_channel_sample_buffer(lc, samples, channelCount);
 
+   // Set it so we have 1 tick.
+   resetTicks();
+   incrementTick();
+
 	populate_sample_buffer(samples, channelCount, 0);
+
+   // Interval Channel
+   CPPUNIT_ASSERT_EQUAL((int) (xTaskGetTickCount() * MS_PER_TICK), samples->valueInt);
+
+   // UtC Channel.  Just test that its 0 for now
+   CPPUNIT_ASSERT_EQUAL(0ll, samples->valueLongLong);
 
 	//analog channel
 	CPPUNIT_ASSERT_EQUAL(123 * 0.0048828125f, samples->valueFloat);
@@ -96,17 +109,32 @@ void SampleRecordTest::testInitSampleRecord()
 {
 	LoggerConfig *lc = getWorkingLoggerConfig();
 
-	size_t expectedEnabledChannels = 14;
+	size_t expectedEnabledChannels = 16;
 
 	size_t channelCount = get_enabled_channel_count(lc);
-	CPPUNIT_ASSERT_EQUAL(channelCount, expectedEnabledChannels); //current logger config enables 13 channels
+	CPPUNIT_ASSERT_EQUAL(expectedEnabledChannels, channelCount);
 
 	ChannelSample * samples = create_channel_sample_buffer(lc, channelCount);
 	init_channel_sample_buffer(lc, samples, channelCount);
 
 	ChannelSample * ts = samples;
 
-        // XXX Put the new code here.
+   {
+     const struct TimeConfig *tc = lc->TimeConfigs;
+
+     // Check what should be Uptime (Interval)
+     CPPUNIT_ASSERT_EQUAL(CHANNEL_Interval, (ChannelIds) tc->cfg.channeId);
+     CPPUNIT_ASSERT_EQUAL(TimeType_Uptime, tc->tt);
+
+     ++ts;
+     ++tc;
+
+     // Check what should be the Utc
+     CPPUNIT_ASSERT_EQUAL(CHANNEL_Utc, (ChannelIds) tc->cfg.channeId);
+     CPPUNIT_ASSERT_EQUAL(TimeType_UtcMillis, tc->tt);
+
+     ++ts;
+   }
 
 	for (int i = 0; i < CONFIG_ADC_CHANNELS; i++){
 		ADCConfig *ac = &lc->ADCConfigs[i];
