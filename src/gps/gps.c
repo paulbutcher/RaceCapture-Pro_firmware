@@ -116,12 +116,15 @@ tiny_millis_t getUptimeAtSample() {
 
 /**
  * Performs a full update of the g_dtLastFix value.  Also update the g_dtFirstFix value if it hasn't
- * already been set.
+ * already been set along with updating the Milliseconds as well
  * @param fixDateTime The DateTime of the GPS fix.
  */
 void updateFullDateTime(DateTime fixDateTime) {
    updateUptimeAtSample();
+   updateMillisSinceEpoch(fixDateTime);
+
    g_dtLastFix = fixDateTime;
+
    if (g_dtFirstFix.year == 0)
       g_dtFirstFix = fixDateTime;
 }
@@ -390,7 +393,6 @@ static void parseRMC(char *data) {
    }
 
    updateFullDateTime(dt);
-   updateMillisSinceEpoch(dt);
    updatePosition(latitude, longitude);
 }
 
