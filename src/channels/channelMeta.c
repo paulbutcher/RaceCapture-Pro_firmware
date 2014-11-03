@@ -55,12 +55,14 @@ size_t find_channel_id(const char * name){
 	return 0;
 }
 
+// XXX_CHANNELID_TAG
 void initialize_channels(){
 	if (g_channels.magicInit != MAGIC_NUMBER_CHANNEL_INIT){
 		flash_default_channels();
 	}
 }
 
+// XXX_CHANNELID_TAG
 int flash_default_channels(void){
 	pr_info("flashing default channels...");
 	int result = flash_channels(&g_defaultChannelMeta, sizeof (g_defaultChannelMeta));

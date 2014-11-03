@@ -8,14 +8,10 @@ static size_t g_virtualChannelCount = 0;
 static VirtualChannel g_virtualChannels[MAX_VIRTUAL_CHANNELS];
 
 VirtualChannel * get_virtual_channel(size_t id){
-	VirtualChannel *c;
-	if (id < g_virtualChannelCount){
-		c = g_virtualChannels + id;
-	}
-	else{
-		c = NULL;
-	}
-	return c;
+	if (id < g_virtualChannelCount)
+		return g_virtualChannels + id;
+
+	return NULL;
 }
 
 int create_virtual_channel(const char *name, unsigned short sampleRate){

@@ -2,7 +2,6 @@
 #define LOGGERCONFIG_H_
 
 #include <stddef.h>
-#include "channelMeta.h"
 #include "geopoint.h"
 #include "tracks.h"
 #include "capabilities.h"
@@ -57,9 +56,16 @@ typedef struct _VersionInfo{
 
 #define DEFAULT_VERSION_INFO {MAJOR_REV, MINOR_REV, BUGFIX_REV}
 
+#define DEFAULT_LABEL_LENGTH			12
+#define DEFAULT_UNITS_LENGTH			8
+
 typedef struct _ChannelConfig{
-	unsigned short channeId;
+	char label[DEFAULT_LABEL_LENGTH];
+	char units[DEFAULT_UNITS_LENGTH];
+	float min;
+	float max;
 	unsigned short sampleRate;
+	unsigned char precision;
 } ChannelConfig;
 
 typedef struct _ScalingMap{
@@ -259,7 +265,6 @@ typedef struct _PidConfig{
 	unsigned short pid;
 } PidConfig;
 
-#define OBD2_CHANNELS 20
 
 typedef struct _OBD2Config{
 	unsigned char enabled;
@@ -318,18 +323,16 @@ enum gps_channels{
 	gps_channel_latitude,
 	gps_channel_longitude,
 	gps_channel_speed,
-	gps_channel_time,
 	gps_channel_satellites,
 	gps_channel_distance
 };
 
+// STIEG: Add configs here for GPS since needed.
 typedef struct _GPSConfig{
-	unsigned short sampleRate;
-	unsigned char positionEnabled;
-	unsigned char timeEnabled;
-	unsigned char speedEnabled;
-	unsigned char distanceEnabled;
-	unsigned char satellitesEnabled;
+   ChannelConfig position;
+	ChannelConfig speed;
+	ChannelConfig distance;
+	ChannelConfig satellites;
 } GPSConfig;
 
 #define DEFAULT_GPS_CONFIG { SAMPLE_50Hz , 1, 1, 1, 1, 0 }
@@ -490,33 +493,46 @@ typedef struct _ConnectivityConfig {
 										}
 
 typedef struct _LoggerConfig {
+	VersionInfo RcpVersionInfo;
+
+	//PWM/Analog out configurations
+	unsigned short PWMClockFrequency;
+
    // Time Config
    struct TimeConfig TimeConfigs[CONFIG_TIME_CHANNELS];
 
 	//ADC Calibrations
 	ADCConfig ADCConfigs[CONFIG_ADC_CHANNELS];
-	//PWM/Analog out configurations
-	unsigned short PWMClockFrequency;
+
 	PWMConfig PWMConfigs[CONFIG_PWM_CHANNELS];
+
 	//GPIO configurations
 	GPIOConfig GPIOConfigs[CONFIG_GPIO_CHANNELS];
+
 	//Timer Configurations
 	TimerConfig TimerConfigs[CONFIG_TIMER_CHANNELS];
+
 	//IMU Configurations
 	ImuConfig ImuConfigs[CONFIG_IMU_CHANNELS];
+
 	//CAN Configuration
 	CANConfig CanConfig;
+
 	//OBD2 Config
 	OBD2Config OBD2Configs;
+
 	//GPS Configuration
 	GPSConfig GPSConfigs;
+
 	//Lap Configuration
 	LapConfig LapConfigs;
+
 	//Track configuration
 	TrackConfig TrackConfigs;
+
 	//Connectivity Configuration
 	ConnectivityConfig ConnectivityConfigs;
-	VersionInfo RcpVersionInfo;
+
 	//Padding data to accommodate flash routine
 	char padding_data[FLASH_PAGE_SIZE];
 } LoggerConfig;

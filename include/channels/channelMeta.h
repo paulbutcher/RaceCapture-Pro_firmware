@@ -10,10 +10,10 @@
 #define CHANNEL_ADD_MODE_COMPLETE 		2
 
 #define MAX_CHANNEL_COUNT				90
-#define DEFAULT_LABEL_LENGTH			11
-#define DEFAULT_UNITS_LENGTH			11
+#define DEFAULT_LABEL_LENGTH			12
+#define DEFAULT_UNITS_LENGTH			8
 
-
+/* KILL_ME
 #define CHANNEL_SYSTEM_CHANNEL_FLAG 	0
 
 #define CHANNEL_TYPE_UNKNOWN			0
@@ -24,23 +24,17 @@
 #define CHANNEL_TYPE_IMU				5
 #define CHANNEL_TYPE_GPS				6
 #define CHANNEL_TYPE_STATISTICS			7
+*/
 
 #define MAGIC_NUMBER_CHANNEL_INIT		0xDEADBEE7
 
-typedef struct _ChannelName{
+struct ChannelMetadata {
 	char label[DEFAULT_LABEL_LENGTH];
 	char units[DEFAULT_UNITS_LENGTH];
-	unsigned char precision;
-	unsigned char flags;
 	float min;
 	float max;
-} Channel;
-
-typedef struct _Channels{
-	uint32_t magicInit;
-	size_t count;
-	Channel channels[MAX_CHANNEL_COUNT];
-} Channels;
+	unsigned char precision;
+};
 
 void initialize_channels();
 int flash_default_channels(void);

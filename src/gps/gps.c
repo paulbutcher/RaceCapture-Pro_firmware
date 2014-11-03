@@ -461,6 +461,10 @@ float getGPSSpeed() {
    return g_speed;
 }
 
+float getGpsSpeedInMph() {
+   return getGPSSpeed() * 0.621371192; //convert to MPH
+}
+
 void setGPSSpeed(float speed) {
    g_speed = speed;
 }
