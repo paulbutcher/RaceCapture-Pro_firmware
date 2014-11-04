@@ -14,7 +14,10 @@ static Channels g_channels = DEFAULT_CHANNEL_META;
 static const Channels g_defaultChannelMeta = DEFAULT_CHANNEL_META;
 static Channels * g_channelsMetaBuffer = NULL;
 
+// STIEG: Clean this up.  May need to keep the Channel bits.
+
 unsigned char get_channel_type(const Channel *channel){
+   // STIEG: Clean this up.
 	unsigned char channelType = CHANNEL_TYPE_UNKNOWN;
 	if (channel){
 		channelType = channel->flags >> 1;

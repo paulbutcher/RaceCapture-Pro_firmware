@@ -67,6 +67,7 @@ int getConnectivitySampleRateLimit(){
 	return sampleRateLimit;
 }
 
+// STIEG: FIX ME! This can be done with math
 int encodeSampleRate(int sampleRate){
 
 	switch(sampleRate){
@@ -90,6 +91,7 @@ int encodeSampleRate(int sampleRate){
 	}
 }
 
+// STIEG: FIX ME!  This can be done with math.
 int decodeSampleRate(int sampleRateCode){
 
 	switch(sampleRateCode){

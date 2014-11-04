@@ -11,6 +11,7 @@
 #include <limits.h>
 #include "loggerConfig.h"
 
+// STIEG: FIX ME.  Use LongLong here.
 #define NIL_SAMPLE INT_MIN + 1
 
 #define LOGGER_MSG_SAMPLE    0

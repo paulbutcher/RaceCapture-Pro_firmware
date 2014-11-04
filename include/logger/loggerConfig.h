@@ -44,6 +44,7 @@
 #define LINEAR_SCALING_PRECISION			7
 #define FILTER_ALPHA_PRECISION				2
 
+// STIEG: Eliminate these Macros
 #define HIGHER_SAMPLE(X,Y) 					((X != SAMPLE_DISABLED && X < Y))
 #define HIGHER_SAMPLE_RATE(X,Y)				((X != SAMPLE_DISABLED && Y != SAMPLE_DISABLED && X < Y) || (X != SAMPLE_DISABLED && Y == SAMPLE_DISABLED) ? X : Y)
 #define LOWER_SAMPLE_RATE(X,Y)				(X > Y ? X : Y)
@@ -318,32 +319,16 @@ typedef struct _CANConfig{
 	DEFAULT_CAN_BAUD_RATE \
 }
 
-
-enum gps_channels{
-	gps_channel_latitude,
-	gps_channel_longitude,
-	gps_channel_speed,
-	gps_channel_satellites,
-	gps_channel_distance
-};
-
 // STIEG: Add configs here for GPS since needed.
 typedef struct _GPSConfig{
-   ChannelConfig position;
+   ChannelConfig latitude;
+   ChannelConfig longitude;
 	ChannelConfig speed;
 	ChannelConfig distance;
 	ChannelConfig satellites;
 } GPSConfig;
 
 #define DEFAULT_GPS_CONFIG { SAMPLE_50Hz , 1, 1, 1, 1, 0 }
-
-enum lap_stat_channels{
-	lap_stat_channel_lapcount,
-	lap_stat_channel_laptime,
-	lap_stat_channel_sectortime,
-	lap_stat_channel_sector,
-	lap_stat_channel_predtime
-};
 
 typedef struct _LapConfig{
 	ChannelConfig lapCountCfg;

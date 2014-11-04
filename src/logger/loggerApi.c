@@ -236,26 +236,27 @@ int api_log(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS;
 }
 
-static void writeSampleMeta(Serial *serial, ChannelSample *channelSamples, size_t channelCount, int sampleRateLimit, int more){
-	int sampleCount = 0;
+static void writeSampleMeta(Serial *serial, ChannelSample *sample,
+                            size_t channelCount, int sampleRateLimit, int more) {
 	json_arrayStart(serial, "meta");
-	ChannelSample *sample = channelSamples;
-	for (size_t i = 0; i < channelCount; i++){
-		if (SAMPLE_DISABLED == sample->sampleRate) continue;
-		if (sampleCount++ > 0) serial->put_c(',');
+
+	for (size_t i = 0; i < channelCount; i++, sample++){
+
+		if (0 < i)
+         serial->put_c(',');
+
+      const ChannelConfig *chCfg = sample->cfg;
+		const int precision = chCfg->precision;
 		serial->put_c('{');
-		const Channel *field = get_channel(sample->channelId);
-		json_int(serial, "type", get_channel_type(field),1);
-		json_string(serial, "nm", field->label, 1);
-		json_string(serial, "ut", field->units, 1);
-		int precision = field->precision;
-		json_float(serial, "min", field->min, precision, 1);
+		json_string(serial, "nm", chCfg->label, 1);
+		json_string(serial, "ut", chCfg->units, 1);
+		json_float(serial, "min", chCfg->min, precision, 1);
 		json_float(serial, "max", field->max, precision, 1);
-		json_int(serial, "prec", field->precision, 1);
-		json_int(serial, "sr", decodeSampleRate(LOWER_SAMPLE_RATE(sample->sampleRate, sampleRateLimit)), 0);
+		json_int(serial, "prec", precision, 1);
+		json_int(serial, "sr", decodeSampleRate(sample->sampleRate, 0);
 		serial->put_c('}');
-		sample++;
 	}
+
 	json_arrayEnd(serial, more);
 }
 
@@ -275,76 +276,103 @@ int api_getMeta(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS_NO_RETURN;
 }
 
-void api_sendSampleRecord(Serial *serial, ChannelSample *channelSamples, size_t channelCount, unsigned int tick, int sendMeta){
-	json_objStart(serial);
-	json_objStartString(serial, "s");
+void api_sendSampleRecord(Serial *serial, ChannelSample *channelSamples,
+                          size_t channelCount, unsigned int tick, int sendMeta) {
+   json_objStart(serial);
+   json_objStartString(serial, "s");
+   json_uint(serial,"t", tick, 1);
 
-	json_uint(serial,"t",tick,1);
-	if (sendMeta) writeSampleMeta(serial, channelSamples, channelCount, getConnectivitySampleRateLimit(), 1);
+   if (sendMeta)
+      writeSampleMeta(serial, channelSamples, channelCount,
+                      getConnectivitySampleRateLimit(), 1);
 
-	unsigned int channelsBitmask = 0;
-	json_arrayStart(serial, "d");
-	ChannelSample *sample = channelSamples;
-	for (size_t i = 0; i < channelCount; i++, sample++) {
-           const Channel *channel = get_channel(sample->channelId);
+   unsigned int channelsBitmask = 0;
+   json_arrayStart(serial, "d");
+   ChannelSample *sample = channelSamples;
 
-           // XXX: This may cause issues since we now do longs.  Probably should fix it.
-           if (NIL_SAMPLE != sample->valueInt) {
-              channelsBitmask = channelsBitmask | (1 << i);
-              const int precision = channel->precision;
+   for (size_t i = 0; i < channelCount; i++, sample++) {
+      if (0 < i)
+         serial->put_c(',');
 
-              enum SampleData sData = sample->sampleData;
-              // XXX: Hack to deal with precision == 0 fix.
-              if (precision == 0)
-                 sData = SampleData_Int;
+      // STIEG: Fix NIL_SAMPLE, use long long.
+      if (sample->valueInt == NIL_SAMPLE)
+         continue;
 
-              switch(sData) {
-              case SampleData_Float:
-                 put_float(serial, sample->valueFloat, precision);
-                 break;
-              case SampleData_Int:
-                 put_int(serial, sample->valueInt);
-                 break;
-              case SampleData_LongLong:
-                 put_ll(serial, sample->valueLongLong);
-                 break;
-              default:
-                 pr_warning("Got to unexpected location in sendSampleRecord\n");
-              }
+      channelsBitmask = channelsBitmask | (1 << i);
 
-              serial->put_c(',');
-           }
-	}
+      const int precision = sample->cfg->precision;
+      switch(sample->sampleData) {
+      case SampleData_Float:
+      case SampleData_Float_Noarg:
+         put_float(serial, sample->valueFloat, precision);
+         break;
+      case SampleData_Int:
+      case SampleData_Int_Noarg:
+         put_int(serial, sample->valueInt);
+         break;
+      case SampleData_LongLong:
+      case SampleData_LongLong_Noarg:
+         put_ll(serial, sample->valueLongLong);
+         break;
+      case SampleData_Double:
+      case SampleData_Double_Noarg:
+         put_double(serial, sample->valueDouble, precision);
+         break;
+      default:
+         pr_warning("Got to unexpected location in sendSampleRecord\n");
+      }
+   }
 
-	put_uint(serial, channelsBitmask);
-	json_arrayEnd(serial, 0);
+   serial->put_c(',');
+   put_uint(serial, channelsBitmask);
+   json_arrayEnd(serial, 0);
 
-	json_objEnd(serial, 0);
-	json_objEnd(serial, 0);
+   json_objEnd(serial, 0);
+   json_objEnd(serial, 0);
 }
 
-static const jsmntok_t * setChannelConfig(Serial *serial, const jsmntok_t *cfg, ChannelConfig *channelCfg, setExtField_func setExtField, void *extCfg){
-	if (cfg->type == JSMN_OBJECT && cfg->size % 2 == 0){
-		int size = cfg->size;
-		cfg++;
-		for (int i = 0; i < size; i += 2 ){
-			const jsmntok_t *nameTok = cfg;
-			jsmn_trimData(nameTok);
-			cfg++;
-			const jsmntok_t *valueTok = cfg;
-			cfg++;
-			if (valueTok->type == JSMN_PRIMITIVE || valueTok->type == JSMN_STRING) jsmn_trimData(valueTok);
+static const jsmntok_t * setChannelConfig(Serial *serial, const jsmntok_t *cfg,
+                                          ChannelConfig *channelCfg,
+                                          setExtField_func setExtField,
+                                          void *extCfg) {
 
-			char *name = nameTok->data;
-			char *value = valueTok->data;
-			unescapeTextField(value);
+   if (cfg->type != JSMN_OBJECT || cfg->size % 2 != 0)
+      return cfg;
 
-			if (NAME_EQU("id", name)) channelCfg->channeId = filter_channel_id(modp_atoi(value));
-			else if (NAME_EQU("sr", name)) channelCfg->sampleRate = encodeSampleRate(modp_atoi(value));
-			else if (setExtField != NULL) cfg = setExtField(valueTok, name, value, extCfg);
-		}
-	}
-	return cfg;
+   int size = cfg->size;
+   cfg++;
+
+   for (int i = 0; i < size; i += 2 ) {
+      const jsmntok_t *nameTok = cfg;
+      jsmn_trimData(nameTok);
+      cfg++;
+
+      const jsmntok_t *valueTok = cfg;
+      cfg++;
+      if (valueTok->type == JSMN_PRIMITIVE || valueTok->type == JSMN_STRING)
+         jsmn_trimData(valueTok);
+
+      char *name = nameTok->data;
+      char *value = valueTok->data;
+      unescapeTextField(value);
+
+      if (NAME_EQU("label", name))
+         memcpy(channelCfg->label, value, DEFAULT_LABEL_LENGTH);
+      else if (NAME_EQU("units", name))
+         memcpy(channelCfg->units, value, DEFAULT_UNITS_LENGTH);
+      else if (NAME_EQU("min", name))
+         channelCfg->min = modp_atof(value);
+      else if (NAME_EQU("max", name))
+         channelCfg->max = modp_atof(value);
+      else if (NAME_EQU("sr", name))
+         channelCfg->sampleRate = encodeSampleRate(modp_atoi(value));
+      else if (NAME_EQU("units", name))
+         channelCfg->sampleRate = (unsianged char) modp_atoi(value);
+      else if (setExtField != NULL)
+         cfg = setExtField(valueTok, name, value, extCfg);
+   }
+
+   return cfg;
 }
 
 static void setMultiChannelConfigGeneric(Serial *serial, const jsmntok_t * json, getConfigs_func getConfigs, setExtField_func setExtFieldFunc){
