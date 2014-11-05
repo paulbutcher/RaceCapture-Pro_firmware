@@ -10,8 +10,6 @@
 #define CHANNEL_ADD_MODE_COMPLETE 		2
 
 #define MAX_CHANNEL_COUNT				90
-#define DEFAULT_LABEL_LENGTH			12
-#define DEFAULT_UNITS_LENGTH			8
 
 /* KILL_ME
 #define CHANNEL_SYSTEM_CHANNEL_FLAG 	0
@@ -28,14 +26,6 @@
 
 #define MAGIC_NUMBER_CHANNEL_INIT		0xDEADBEE7
 
-struct ChannelMetadata {
-	char label[DEFAULT_LABEL_LENGTH];
-	char units[DEFAULT_UNITS_LENGTH];
-	float min;
-	float max;
-	unsigned char precision;
-};
-
 void initialize_channels();
 int flash_default_channels(void);
 const Channel * get_channel(size_t id);
@@ -48,10 +38,6 @@ void set_channel_type(Channel *channel, unsigned char type);
 int is_system_channel(const Channel *channel);
 int flash_channels(const Channels *source, size_t rawSize);
 int add_channel(const Channel *channel, int mode, size_t index);
-#define DEFAULT_GPS_POSITION_PRECISION 		6
-#define DEFAULT_GPS_RADIUS_PRECISION 		5
-#define DEFAULT_VOLTAGE_SCALING_PRECISION	2
-#define DEFAULT_ANALOG_SCALING_PRECISION	2
 
 #include "system_channels.h"
 

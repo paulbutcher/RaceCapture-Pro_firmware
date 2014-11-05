@@ -425,8 +425,16 @@ tiny_millis_t getLastLapTime() {
    return g_lastLapTime;
 }
 
+float getLastLapTimeInMinutes() {
+   return tinyMillisToMinutes(getLastLapTime());
+}
+
 tiny_millis_t getLastSectorTime() {
    return g_lastSectorTime;
+}
+
+float getLastSectorTimeInMinutes() {
+   return tinyMillisToMinutes(getLastSectorTime());
 }
 
 int getAtStartFinish() {

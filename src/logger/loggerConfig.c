@@ -24,6 +24,28 @@ static int firmware_version_matches_last(){
 	return version->major == MAJOR_REV && version->minor == MINOR_REV && version->bugfix == BUGFIX_REV;
 }
 
+unsigned char get_channel_type(const ChannelConfig *channel){
+   // STIEG: Clean this up.
+	unsigned char channelType = CHANNEL_TYPE_UNKNOWN;
+	if (channel){
+		channelType = channel->flags >> 1;
+	}
+	return channelType;
+}
+
+int is_channel_type(const Channel *channel, unsigned char type){
+	return (channel != NULL && (((channel->flags >> 1) & 0xF) == type ));
+}
+
+void set_channel_type(Channel *channel, unsigned char type){
+	if (channel != NULL) channel->flags = ((type & 0xF) << 1) + (channel->flags & 0x1);
+}
+
+int is_system_channel(const Channel *channel){
+	return channel != NULL && (channel->flags & (1 << CHANNEL_SYSTEM_CHANNEL_FLAG));
+}
+
+
 int flash_default_logger_config(void){
 	pr_info("flashing default logger config...");
 	int result = memory_flash_region(&g_savedLoggerConfig, &g_defaultLoggerConfig, sizeof (LoggerConfig));

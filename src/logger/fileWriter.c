@@ -14,7 +14,6 @@
 #include "taskUtil.h"
 #include "mod_string.h"
 #include "printk.h"
-#include "channelMeta.h"
 #include "mem_mang.h"
 #include "LED.h"
 

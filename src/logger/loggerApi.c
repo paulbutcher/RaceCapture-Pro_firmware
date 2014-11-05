@@ -2,7 +2,6 @@
 #include "capabilities.h"
 #include "loggerApi.h"
 #include "loggerConfig.h"
-#include "channelMeta.h"
 #include "modp_atonum.h"
 #include "mod_string.h"
 #include "sampleRecord.h"
@@ -236,6 +235,15 @@ int api_log(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS;
 }
 
+static void json_channelConfig(Serial *serial, ChannelConfig *cfg, int more) {
+	json_string(serial, "label", cfg->label, 1);
+	json_string(serial, "units", cfg->units, 1);
+	json_float(serial, "min", cfg->min, cfg->precision, 1);
+	json_float(serial, "min", cfg->max, cfg->precision, 1);
+	json_int(serial, "sr", decodeSampleRate(cfg->sampleRate), 1);
+   json_int(serial, "prec", (int) cfg->precision, more);
+}
+
 static void writeSampleMeta(Serial *serial, ChannelSample *sample,
                             size_t channelCount, int sampleRateLimit, int more) {
 	json_arrayStart(serial, "meta");
@@ -245,15 +253,8 @@ static void writeSampleMeta(Serial *serial, ChannelSample *sample,
 		if (0 < i)
          serial->put_c(',');
 
-      const ChannelConfig *chCfg = sample->cfg;
-		const int precision = chCfg->precision;
 		serial->put_c('{');
-		json_string(serial, "nm", chCfg->label, 1);
-		json_string(serial, "ut", chCfg->units, 1);
-		json_float(serial, "min", chCfg->min, precision, 1);
-		json_float(serial, "max", field->max, precision, 1);
-		json_int(serial, "prec", precision, 1);
-		json_int(serial, "sr", decodeSampleRate(sample->sampleRate, 0);
+      json_channelConfig(serial, sample->cfg, 0);
 		serial->put_c('}');
 	}
 
@@ -366,8 +367,8 @@ static const jsmntok_t * setChannelConfig(Serial *serial, const jsmntok_t *cfg,
          channelCfg->max = modp_atof(value);
       else if (NAME_EQU("sr", name))
          channelCfg->sampleRate = encodeSampleRate(modp_atoi(value));
-      else if (NAME_EQU("units", name))
-         channelCfg->sampleRate = (unsianged char) modp_atoi(value);
+      else if (NAME_EQU("prec", name))
+         channelCfg->precision = (unsigned char) modp_atoi(value);
       else if (setExtField != NULL)
          cfg = setExtField(valueTok, name, value, extCfg);
    }
@@ -464,38 +465,36 @@ int api_setAnalogConfig(Serial *serial, const jsmntok_t * json){
 	return API_SUCCESS;
 }
 
-static void json_channelConfig(Serial *serial, ChannelConfig *cfg, int more){
-	json_int(serial, "id", cfg->channeId, 1);
-	json_int(serial, "sr", decodeSampleRate(cfg->sampleRate), more);
-}
-
 static void sendAnalogConfig(Serial *serial, size_t startIndex, size_t endIndex){
 
 	json_objStart(serial);
 	json_objStartString(serial, "analogCfg");
 	for (size_t i = startIndex; i <= endIndex; i++){
 
-		ADCConfig *cfg = &(getWorkingLoggerConfig()->ADCConfigs[i]);
+		ADCConfig *adcCfg = &(getWorkingLoggerConfig()->ADCConfigs[i]);
 		json_objStartInt(serial, i);
-		json_channelConfig(serial, &(cfg->cfg), 1);
-		json_int(serial, "scalMod", cfg->scalingMode, 1);
-		json_float(serial, "scaling", cfg->linearScaling, LINEAR_SCALING_PRECISION, 1);
-		json_float(serial, "offset", cfg->linearOffset, LINEAR_SCALING_PRECISION, 1);
-		json_float(serial, "alpha", cfg->filterAlpha, FILTER_ALPHA_PRECISION, 1);
+		json_channelConfig(serial, &(adcCfg->cfg), 1);
+		json_int(serial, "scalMod", adcCfg->scalingMode, 1);
+		json_float(serial, "scaling", adcCfg->linearScaling, LINEAR_SCALING_PRECISION, 1);
+		json_float(serial, "offset", adcCfg->linearOffset, LINEAR_SCALING_PRECISION, 1);
+		json_float(serial, "alpha", adcCfg->filterAlpha, FILTER_ALPHA_PRECISION, 1);
 
 		json_objStartString(serial, "map");
 		json_arrayStart(serial, "raw");
 
 		for (size_t b = 0; b < ANALOG_SCALING_BINS; b++){
-			put_int(serial,  cfg->scalingMap.rawValues[b]);
+			put_int(serial,  adcCfg->scalingMap.rawValues[b]);
 			if (b < ANALOG_SCALING_BINS - 1) serial->put_c(',');
 		}
+
 		json_arrayEnd(serial, 1);
 		json_arrayStart(serial, "scal");
+
 		for (size_t b = 0; b < ANALOG_SCALING_BINS; b++){
-			put_float(serial, cfg->scalingMap.scaledValues[b], DEFAULT_ANALOG_SCALING_PRECISION);
+			put_float(serial, adcCfg->scalingMap.scaledValues[b], DEFAULT_ANALOG_SCALING_PRECISION);
 			if (b < ANALOG_SCALING_BINS - 1) serial->put_c(',');
 		}
+
 		json_arrayEnd(serial, 0);
 		json_objEnd(serial, 0); //map
 		json_objEnd(serial, i != endIndex); //index
@@ -914,6 +913,19 @@ int api_setTimerConfig(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS;
 }
 
+static unsigned short getGpsConfigHighSampleRate(GPSConfig *cfg) {
+   unsigned short rate = SAMPLE_DISABLED;
+
+   rate = HIGHER_SAMPLE_RATE(rate, cfg->latitude.sampleRate);
+   rate = HIGHER_SAMPLE_RATE(rate, cfg->longitude.sampleRate);
+   rate = HIGHER_SAMPLE_RATE(rate, cfg->speed.sampleRate);
+   rate = HIGHER_SAMPLE_RATE(rate, cfg->distance.sampleRate);
+   rate = HIGHER_SAMPLE_RATE(rate, cfg->satellites.sampleRate);
+
+   return rate;
+}
+
+// STIEG: Change this or no?
 int api_getGpsConfig(Serial *serial, const jsmntok_t *json){
 
 	GPSConfig *gpsCfg = &(getWorkingLoggerConfig()->GPSConfigs);
@@ -921,29 +933,43 @@ int api_getGpsConfig(Serial *serial, const jsmntok_t *json){
 	json_objStart(serial);
 	json_objStartString(serial, "gpsCfg");
 
-	json_int(serial, "sr", decodeSampleRate(gpsCfg->sampleRate), 1);
+   unsigned short highestRate = getGpsConfigHighSampleRate(gpsCfg);
+	json_int(serial, "sr", decodeSampleRate(highestRate), 1);
 
-	json_int(serial, "pos", gpsCfg->positionEnabled, 1);
-	json_int(serial, "speed", gpsCfg->speedEnabled, 1);
-	json_int(serial, "time", gpsCfg->timeEnabled, 1);
-	json_int(serial, "dist", gpsCfg->distanceEnabled, 1);
-	json_int(serial, "sats", gpsCfg->satellitesEnabled, 0);
+   const int posEnabled = gpsCfg->latitude.sampleRate != SAMPLE_DISABLED &&
+      gpsCfg->longitude.sampleRate != SAMPLE_DISABLED;
+	json_int(serial, "pos",  posEnabled, 1);
+
+	json_int(serial, "speed", gpsCfg->speed.sampleRate != SAMPLE_DISABLED, 1);
+	json_int(serial, "dist", gpsCfg->distance.sampleRate != SAMPLE_DISABLED, 1);
+	json_int(serial, "sats", gpsCfg->satellites.sampleRate != SAMPLE_DISABLED, 0);
 
 	json_objEnd(serial, 0);
 	json_objEnd(serial, 0);
 	return API_SUCCESS_NO_RETURN;
 }
 
-int api_setGpsConfig(Serial *serial, const jsmntok_t *json){
+static void gpsConfigTestAndSet(const jsmntok_t *json, ChannelConfig *cfg,
+                                const char *str, const unsigned short sr) {
+   unsigned char test = 0;
+	setUnsignedCharValueIfExists(json, str, &test, NULL);
+   cfg->sampleRate = test == 0 ? SAMPLE_DISABLED : sr;
 
+}
+
+int api_setGpsConfig(Serial *serial, const jsmntok_t *json){
 	GPSConfig *gpsCfg = &(getWorkingLoggerConfig()->GPSConfigs);
-	int sr = 0;
-	if (setIntValueIfExists(json, "sr", &sr)) gpsCfg->sampleRate = encodeSampleRate(sr);
-	setUnsignedCharValueIfExists(json, "pos", &gpsCfg->positionEnabled, NULL);
-	setUnsignedCharValueIfExists(json, "speed", &gpsCfg->speedEnabled, NULL);
-	setUnsignedCharValueIfExists(json, "time", &gpsCfg->timeEnabled, NULL);
-	setUnsignedCharValueIfExists(json, "dist", &gpsCfg->distanceEnabled, NULL);
-	setUnsignedCharValueIfExists(json, "sats", &gpsCfg->satellitesEnabled, NULL);
+
+   unsigned short sr = SAMPLE_DISABLED;
+	int tmp = 0;
+	if (setIntValueIfExists(json, "sr", &tmp))
+       sr = encodeSampleRate(tmp);
+
+   gpsConfigTestAndSet(json, &(gpsCfg->latitude), "pos", sr);
+   gpsConfigTestAndSet(json, &(gpsCfg->longitude), "pos", sr);
+   gpsConfigTestAndSet(json, &(gpsCfg->speed), "speed", sr);
+   gpsConfigTestAndSet(json, &(gpsCfg->distance), "dist", sr);
+   gpsConfigTestAndSet(json, &(gpsCfg->satellites), "sats", sr);
 
 	configChanged();
 	return API_SUCCESS;
@@ -970,6 +996,7 @@ int api_setCanConfig(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS;
 }
 
+// STIEG: Use proper ChannelConfig here in JSON?
 int api_getObd2Config(Serial *serial, const jsmntok_t *json){
 	json_objStart(serial);
 	json_objStartString(serial, "obd2Cfg");
@@ -983,11 +1010,11 @@ int api_getObd2Config(Serial *serial, const jsmntok_t *json){
 	for (int i = 0; i < enabledPids; i++){
 		PidConfig *pidCfg = &obd2Cfg->pids[i];
 		json_objStart(serial);
-		json_int(serial,"id",pidCfg->cfg.channeId, 1);
-		json_int(serial,"sr",decodeSampleRate(pidCfg->cfg.sampleRate), 1);
+      json_channelConfig(serial, &(pidCfg->cfg), 1);
 		json_int(serial,"pid",pidCfg->pid, 0);
 		json_objEnd(serial, i < enabledPids - 1);
 	}
+
 	json_arrayEnd(serial, 0);
 	json_objEnd(serial,0);
 	json_objEnd(serial, 0);
@@ -1241,61 +1268,14 @@ int api_getTrackDb(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS_NO_RETURN;
 }
 
-int api_addChannel(Serial *serial, const jsmntok_t *json){
-
-	unsigned char mode = 0;
-	int index = 0;
-
-	if (setUnsignedCharValueIfExists(json, "mode", &mode, NULL) &&
-		setIntValueIfExists(json, "index", &index)){
-		Channel channel;
-		setStringValueIfExists(json, "nm", channel.label, DEFAULT_LABEL_LENGTH);
-		setStringValueIfExists(json, "ut", channel.units, DEFAULT_UNITS_LENGTH);
-
-		const jsmntok_t *channelNode = findNode(json, "channel");
-		if (channelNode){
-			unsigned char systemChannel = 0;
-			if (setUnsignedCharValueIfExists(channelNode, "sys", &systemChannel, NULL)){
-				systemChannel = systemChannel ? 1 : 0;
-			}
-			unsigned char channelType = CHANNEL_TYPE_UNKNOWN;
-			setUnsignedCharValueIfExists(channelNode, "type", &channelType, NULL);
-			channel.flags = (channelType << 1) + systemChannel;
-			setUnsignedCharValueIfExists(channelNode, "prec", &channel.precision, NULL);
-			setFloatValueIfExists(channelNode, "min", &channel.min);
-			setFloatValueIfExists(channelNode, "max", &channel.max);
-
-			add_channel(&channel, mode, index);
-			return API_SUCCESS;
-		}
-	}
+int api_addChannel(Serial *serial, const jsmntok_t *json) {
+   // STIEG: Kill me
 	return API_ERROR_MALFORMED;
 }
 
-int api_getChannels(Serial *serial, const jsmntok_t *json){
-
-	const Channels *channelsInfo = get_channels();
-	size_t channels_count = channelsInfo->count;
-
-	json_objStart(serial);
-	json_int(serial,"size", channels_count, 1);
-	json_int(serial, "max", MAX_CHANNEL_COUNT, 1);
-	json_arrayStart(serial, "channels");
-	for (size_t channel_index = 0; channel_index < channels_count; channel_index++){
-		json_objStart(serial);
-		const Channel *channel = channelsInfo->channels + channel_index;
-		json_string(serial, "nm", channel->label, 1);
-		json_string(serial, "ut", channel->units, 1);
-		json_int(serial, "sys", is_system_channel(channel),1);
-		json_int(serial, "prec", channel->precision, 1);
-		json_float(serial, "min", channel->min, channel->precision, 1);
-		json_float(serial, "max", channel->max, channel->precision, 1);
-		json_int(serial, "type", get_channel_type(channel), 0);
-		json_objEnd(serial, channel_index < channels_count - 1);
-	}
-	json_arrayEnd(serial, 0);
-	json_objEnd(serial, 0);
-	return API_SUCCESS_NO_RETURN;
+int api_getChannels(Serial *serial, const jsmntok_t *json) {
+   // STIEG: Kill me
+	return API_ERROR_MALFORMED;
 }
 
 int api_getScript(Serial *serial, const jsmntok_t *json){
