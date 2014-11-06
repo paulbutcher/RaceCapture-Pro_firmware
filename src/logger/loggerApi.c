@@ -376,7 +376,8 @@ static const jsmntok_t * setChannelConfig(Serial *serial, const jsmntok_t *cfg,
    return cfg;
 }
 
-static void setMultiChannelConfigGeneric(Serial *serial, const jsmntok_t * json, getConfigs_func getConfigs, setExtField_func setExtFieldFunc){
+static void setMultiChannelConfigGeneric(Serial *serial, const jsmntok_t * json,
+                                         getConfigs_func getConfigs, setExtField_func setExtFieldFunc) {
 	if (json->type == JSMN_OBJECT && json->size % 2 == 0){
 		for (int i = 1; i <= json->size; i += 2){
 			const jsmntok_t *idTok = json + i;
@@ -1021,27 +1022,37 @@ int api_getObd2Config(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS_NO_RETURN;
 }
 
+static void getPidConfigs(size_t channelId, void **baseCfg, ChannelConfig **channelCfg){
+	PidConfig *c = &(getWorkingLoggerConfig()->OBD2Configs->pids);
+	*baseCfg = c;
+	*channelCfg = &c->cfg;
+}
+
+static const jsmntok_t * setPidExtendedField(const jsmntok_t *valueTok, const char *name,
+                                               const char *value, void *cfg){
+	PidConfig *pidCfg = (Pidconfig *) cfg;
+
+	if (NAME_EQU("pid", name))
+      pidCfg->pid = (unsigned short) modp_atoi(value);
+
+	return valueTok + 1;
+}
+
 int api_setObd2Config(Serial *serial, const jsmntok_t *json){
 	OBD2Config *obd2Cfg = &(getWorkingLoggerConfig()->OBD2Configs);
 
 	setUnsignedCharValueIfExists(json, "en", &obd2Cfg->enabled, NULL);
 	size_t pidIndex = 0;
 	const jsmntok_t *pids = findNode(json, "pids");
+
 	if (pids != NULL){
 		pids+=2;
-		while (pids != NULL && pids->type == JSMN_OBJECT && pidIndex < OBD2_CHANNELS){
-			PidConfig *pidConfig = (obd2Cfg->pids + pidIndex);
-			setUnsignedShortValueIfExists( pids, "id", &pidConfig->cfg.channeId);
-			uint16_t sampleRate;
-			if (setUnsignedShortValueIfExists( pids, "sr", &sampleRate)){
-				pidConfig->cfg.sampleRate = encodeSampleRate(sampleRate);
-			}
-			setUnsignedShortValueIfExists( pids, "pid", &pidConfig->pid);
-			pids+=7;
-			pidIndex++;
-		}
+      // Double check me against JSON
+      setMultiChannelConfigGeneric(serial, pids, getPidConfigs, setPidExtendedField);
 	}
+
 	obd2Cfg->enabledPids = pidIndex;
+   configChanged();
 	return API_SUCCESS;
 }
 
