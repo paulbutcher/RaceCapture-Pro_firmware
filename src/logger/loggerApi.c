@@ -96,12 +96,6 @@ const static jsmntok_t * findValueNode(const jsmntok_t *node, const char *name){
 	return NULL;
 }
 
-static int setUnsignedShortValueIfExists(const jsmntok_t *root, const char * fieldName, unsigned short *target){
-	const jsmntok_t *valueNode = findValueNode(root, fieldName);
-	if (valueNode) * target = modp_atoi(valueNode->data);
-	return (valueNode != NULL);
-}
-
 static int setUnsignedCharValueIfExists(const jsmntok_t *root, const char * fieldName, unsigned char *target, unsigned char (*filter)(unsigned char)){
 	const jsmntok_t *valueNode = findValueNode(root, fieldName);
 	if (valueNode){
@@ -236,12 +230,12 @@ int api_log(Serial *serial, const jsmntok_t *json){
 }
 
 static void json_channelConfig(Serial *serial, ChannelConfig *cfg, int more) {
-	json_string(serial, "label", cfg->label, 1);
-	json_string(serial, "units", cfg->units, 1);
+	json_string(serial, "nm", cfg->label, 1);
+	json_string(serial, "ut", cfg->units, 1);
 	json_float(serial, "min", cfg->min, cfg->precision, 1);
 	json_float(serial, "min", cfg->max, cfg->precision, 1);
-	json_int(serial, "sr", decodeSampleRate(cfg->sampleRate), 1);
-   json_int(serial, "prec", (int) cfg->precision, more);
+   json_int(serial, "prec", (int) cfg->precision, 1);
+	json_int(serial, "sr", decodeSampleRate(cfg->sampleRate), more);
 }
 
 static void writeSampleMeta(Serial *serial, ChannelSample *sample,
@@ -350,6 +344,7 @@ static const jsmntok_t * setChannelConfig(Serial *serial, const jsmntok_t *cfg,
 
       const jsmntok_t *valueTok = cfg;
       cfg++;
+
       if (valueTok->type == JSMN_PRIMITIVE || valueTok->type == JSMN_STRING)
          jsmn_trimData(valueTok);
 
@@ -357,9 +352,9 @@ static const jsmntok_t * setChannelConfig(Serial *serial, const jsmntok_t *cfg,
       char *value = valueTok->data;
       unescapeTextField(value);
 
-      if (NAME_EQU("label", name))
+      if (NAME_EQU("nm", name))
          memcpy(channelCfg->label, value, DEFAULT_LABEL_LENGTH);
-      else if (NAME_EQU("units", name))
+      else if (NAME_EQU("ut", name))
          memcpy(channelCfg->units, value, DEFAULT_UNITS_LENGTH);
       else if (NAME_EQU("min", name))
          channelCfg->min = modp_atof(value);
@@ -997,7 +992,6 @@ int api_setCanConfig(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS;
 }
 
-// STIEG: Use proper ChannelConfig here in JSON?
 int api_getObd2Config(Serial *serial, const jsmntok_t *json){
 	json_objStart(serial);
 	json_objStartString(serial, "obd2Cfg");
@@ -1022,15 +1016,9 @@ int api_getObd2Config(Serial *serial, const jsmntok_t *json){
 	return API_SUCCESS_NO_RETURN;
 }
 
-static void getPidConfigs(size_t channelId, void **baseCfg, ChannelConfig **channelCfg){
-	PidConfig *c = &(getWorkingLoggerConfig()->OBD2Configs->pids);
-	*baseCfg = c;
-	*channelCfg = &c->cfg;
-}
-
 static const jsmntok_t * setPidExtendedField(const jsmntok_t *valueTok, const char *name,
                                                const char *value, void *cfg){
-	PidConfig *pidCfg = (Pidconfig *) cfg;
+	PidConfig *pidCfg = (PidConfig *) cfg;
 
 	if (NAME_EQU("pid", name))
       pidCfg->pid = (unsigned short) modp_atoi(value);
@@ -1043,13 +1031,17 @@ int api_setObd2Config(Serial *serial, const jsmntok_t *json){
 
 	setUnsignedCharValueIfExists(json, "en", &obd2Cfg->enabled, NULL);
 	size_t pidIndex = 0;
-	const jsmntok_t *pids = findNode(json, "pids");
+	const jsmntok_t *pidsTok = findNode(json, "pids");
 
-	if (pids != NULL){
-		pids+=2;
-      // Double check me against JSON
-      setMultiChannelConfigGeneric(serial, pids, getPidConfigs, setPidExtendedField);
-	}
+	if (pidsTok != NULL && (++pidsTok)->type == JSMN_ARRAY) {
+		size_t arrSize = pidsTok->size;
+
+      for (pidsTok++; pidIndex < arrSize; pidIndex++) {
+         PidConfig *pidCfg = obd2Cfg->pids + pidIndex;
+         ChannelConfig *chCfg = &(pidCfg->cfg);
+         pidsTok = setChannelConfig(serial, pidsTok, chCfg, setPidExtendedField, pidCfg);
+      }
+   }
 
 	obd2Cfg->enabledPids = pidIndex;
    configChanged();
