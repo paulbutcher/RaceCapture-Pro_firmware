@@ -112,10 +112,10 @@ static void appendFloat(float num, int precision){
 }
 
 static int writeHeaders(ChannelSample *sample, size_t sampleCount){
-	char separator = "";
+	char *separator = "";
 
 	for (; 0 < sampleCount; sampleCount--, sample++) {
-      appendFileBuffer(seperator);
+      appendFileBuffer(separator);
       separator = ",";
 
       appendQuotedString(sample->cfg->label);
@@ -131,13 +131,13 @@ static int writeHeaders(ChannelSample *sample, size_t sampleCount){
 
 
 static int writeChannelSamples(ChannelSample *sample, size_t channelCount){
-	if (NULL == channelSamples) {
+	if (NULL == sample) {
       pr_debug("null sample record\r\n");
       return WRITE_FAIL;
 	}
 
-	char separator = "";
-   for (; 0 < channelCount; i++, sample++) {
+	char *separator = "";
+   for (; 0 < channelCount; sample++) {
       appendFileBuffer(separator);
       separator = ",";
 

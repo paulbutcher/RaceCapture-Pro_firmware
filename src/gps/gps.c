@@ -107,6 +107,10 @@ millis_t getMillisSinceEpoch() {
    return g_utcMillisAtSample + deltaSinceSample;
 }
 
+long long getMillisSinceEpochAsLongLong() {
+   return (long long) getMillisSinceEpoch();
+}
+
 static void updateUptimeAtSample() {
    g_uptimeAtSample = getUptime();
 }

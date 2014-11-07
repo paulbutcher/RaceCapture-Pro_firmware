@@ -532,12 +532,12 @@ int Lua_AddVirtualChannel(lua_State *L){
 
    ChannelConfig chCfg;
 
-   chCfg.label = lua_tostring(L, 1);
-   chCfg.units = lua_tostring(L, 2);
+   strncpy(chCfg.label, lua_tostring(L, 1), DEFAULT_LABEL_LENGTH);
+   strncpy(chCfg.units, lua_tostring(L, 2), DEFAULT_UNITS_LENGTH);
    chCfg.min = lua_tonumber(L, 3);
    chCfg.max = lua_tonumber(L, 4);
-   chCfg.sampleRate = (unsigned short) lua_tointeger(L, 5);
-   chCfg.precision = (unsigned char) lua_tointeger(L, 6);
+   chCfg.precision = (unsigned char) lua_tointeger(L, 5);
+   chCfg.sampleRate = (unsigned short) lua_tointeger(L, 6);
 
    lua_pushinteger(L, create_virtual_channel(chCfg));
 

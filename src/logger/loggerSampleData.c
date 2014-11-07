@@ -17,10 +17,10 @@
 #include "linear_interpolate.h"
 #include "printk.h"
 
-static void processChannelSampleWithFloatGetter(ChannelSample *s,
-                                                const ChannelConfig *cfg,
+static ChannelSample* processChannelSampleWithFloatGetter(ChannelSample *s,
+                                                ChannelConfig *cfg,
                                                 const size_t index,
-                                                const float (*getter)(int)) {
+                                                float (*getter)(int)) {
    if (cfg->sampleRate == SAMPLE_DISABLED)
       return s;
 
@@ -32,99 +32,56 @@ static void processChannelSampleWithFloatGetter(ChannelSample *s,
    return ++s;
 }
 
-static void processChannelSampleWithIntGetter(ChannelSample *s,
-                                              const ChannelConfig *cfg,
+static ChannelSample* processChannelSampleWithIntGetter(ChannelSample *s,
+                                              ChannelConfig *cfg,
                                               const size_t index,
-                                              const int (*getter)(int)) {
+                                              int (*getter)(int)) {
    if (cfg->sampleRate == SAMPLE_DISABLED)
       return s;
 
    s->cfg = cfg;
    s->channelIndex = index;
    s->sampleData = SampleData_Int;
-   s->get_int_sample = float_getter;
+   s->get_int_sample = getter;
 
    return ++s;
 }
 
-static void processChannelSampleWithLongLongGetter(ChannelSample *s,
-                                                   const ChannelConfig *cfg,
-                                                   const size_t index,
-                                                   const long long (*getter)(int)) {
-   if (cfg->sampleRate == SAMPLE_DISABLED)
-      return s;
-
-   s->cfg = cfg;
-   s->channelIndex = index;
-   s->sampleData = SampleData_LongLong;
-   s->get_longlong_sample = float_getter;
-
-   return ++s;
-}
-
-static void processChannelSampleWithDoubleGetter(ChannelSample *s,
-                                                 const ChannelConfig *cfg,
-                                                 const size_t index,
-                                                 const double (*getter)(int)) {
-   if (cfg->sampleRate == SAMPLE_DISABLED )
-      return s;
-
-   s->cfg = cfg;
-   s->channelIndex = index;
-   s->sampleData = SampleData_Double;
-   s->get_double_sample = float_getter;
-
-   return ++s;
-}
-
-static void processChannelSampleWithFloatGetterNoarg(ChannelSample *s,
-                                                     const ChannelConfig *cfg
-                                                     const float (*getter)(void)) {
+static ChannelSample* processChannelSampleWithFloatGetterNoarg(ChannelSample *s,
+                                                               ChannelConfig *cfg,
+                                                               float (*getter)()) {
    if (cfg->sampleRate == SAMPLE_DISABLED )
       return s;
 
    s->cfg = cfg;
    s->sampleData = SampleData_Float;
-   s->get_float_sample = getter;
+   s->get_float_sample_noarg = getter;
 
    return ++s;
 }
 
-static void processChannelSampleWithIntGetterNoarg(ChannelSample *s,
-                                                   const ChannelConfig *cfg,
-                                                   const int (*getter)(void)) {
+static ChannelSample* processChannelSampleWithIntGetterNoarg(ChannelSample *s,
+                                                   ChannelConfig *cfg,
+                                                   int (*getter)()) {
    if (cfg->sampleRate == SAMPLE_DISABLED )
       return s;
 
    s->cfg = cfg;
    s->sampleData = SampleData_Int;
-   s->get_int_sample = float_getter;
+   s->get_int_sample_noarg = getter;
 
    return ++s;
 }
 
-static void processChannelSampleWithLongLongGetterNoarg(ChannelSample *s,
-                                                        const ChannelConfig *cfg,
-                                                        const long long (*getter)(void)) {
+static ChannelSample* processChannelSampleWithLongLongGetterNoarg(ChannelSample *s,
+                                                        ChannelConfig *cfg,
+                                                        long long (*getter)()) {
    if (cfg->sampleRate == SAMPLE_DISABLED )
       return s;
 
    s->cfg = cfg;
    s->sampleData = SampleData_LongLong;
-   s->get_longlong_sample = float_getter;
-
-   return ++s;
-}
-
-static void processChannelSampleWithDoubleGetterNoarg(ChannelSample *s,
-                                                      const ChannelConfig *cfg,
-                                                      const double (*getter)(void)) {
-   if (cfg->sampleRate == SAMPLE_DISABLED )
-      return s;
-
-   s->cfg = cfg;
-   s->sampleData = SampleData_Double;
-   s->get_double_sample = float_getter;
+   s->get_longlong_sample_noarg = getter;
 
    return ++s;
 }
@@ -137,7 +94,7 @@ static float getPredictedTimeInMinutes() {
    return tinyMillisToMinutes(getPredictedTime(gp, millis));
 }
 
-static float get_mapped_value(float value, ScalingMap *scalingMap){
+float get_mapped_value(float value, ScalingMap *scalingMap) {
 	unsigned short *bins;
 	unsigned int bin, nextBin;
 
@@ -261,46 +218,46 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
    chanCfg = &(tc->cfg);
    // XXX: Special Trick -- Set highest sample rate here.
    sample->cfg->sampleRate = highSampleRate;
-   sample = processChannelSampleWithIntGetterNoarg(sample, chanCfg, getUptime);
+   sample = processChannelSampleWithIntGetterNoarg(sample, chanCfg, getUptimeAsInt);
 
    tc = &(loggerConfig->TimeConfigs[1]);
    chanCfg = &(tc->cfg);
    // XXX: Special Trick -- Set highest sample rate here.
    sample->cfg->sampleRate = highSampleRate; // Set highest sample rate here.
-   sample = processChannelSampleWithLongLongGetterNoarg(sample, chanCfg, getUptime);
+   sample = processChannelSampleWithLongLongGetterNoarg(sample, chanCfg, getMillisSinceEpochAsLongLong);
 
 
 	for (int i=0; i < CONFIG_ADC_CHANNELS; i++) {
-		const ADCConfig *config = &(loggerConfig->ADCConfigs[i]);
+		ADCConfig *config = &(loggerConfig->ADCConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_analog_sample);
 	}
 
 	for (int i = 0; i < CONFIG_IMU_CHANNELS; i++) {
-		const ImuConfig *config = &(loggerConfig->ImuConfigs[i]);
+		ImuConfig *config = &(loggerConfig->ImuConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_imu_sample);
 	}
 
 	for (int i=0; i < CONFIG_TIMER_CHANNELS; i++) {
-		const TimerConfig *config = &(loggerConfig->TimerConfigs[i]);
+		TimerConfig *config = &(loggerConfig->TimerConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_timer_sample);
 	}
 
 	for (int i=0; i < CONFIG_GPIO_CHANNELS; i++) {
-		const GPIOConfig *config = &(loggerConfig->GPIOConfigs[i]);
+		GPIOConfig *config = &(loggerConfig->GPIOConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithIntGetter(sample, chanCfg, i, GPIO_get);
 	}
 
 	for (int i=0; i < CONFIG_PWM_CHANNELS; i++) {
-		const PWMConfig *config = &(loggerConfig->PWMConfigs[i]);
+		PWMConfig *config = &(loggerConfig->PWMConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_pwm_sample);
 	}
 
-   const OBD2Config *obd2Config = &(loggerConfig->OBD2Configs);
+   OBD2Config *obd2Config = &(loggerConfig->OBD2Configs);
    for (size_t i = 0; i < obd2Config->enabledPids; i++) {
       chanCfg = &(obd2Config->pids[i].cfg);
       sample = processChannelSampleWithIntGetter(sample, chanCfg, i, OBD2_get_current_PID_value);
@@ -308,12 +265,12 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
 
    const size_t virtualChannelCount = get_virtual_channel_count();
    for (size_t i = 0; i < virtualChannelCount; i++) {
-      const VirtualChannel *vc = get_virtual_channel(i);
+      VirtualChannel *vc = get_virtual_channel(i);
       chanCfg = &(vc->config);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_virtual_channel_value);
 	}
 
-   const GPSConfig *gpsConfig = &(loggerConfig->GPSConfigs);
+   GPSConfig *gpsConfig = &(loggerConfig->GPSConfigs);
    chanCfg = &(gpsConfig->latitude);
    sample = processChannelSampleWithFloatGetterNoarg(sample, chanCfg, getLatitude);
    chanCfg = &(gpsConfig->longitude);
@@ -326,7 +283,7 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
    sample = processChannelSampleWithIntGetterNoarg(sample, chanCfg, getSatellitesUsedForPosition);
 
 
-   const LapConfig *trackConfig = &(loggerConfig->LapConfigs);
+   LapConfig *trackConfig = &(loggerConfig->LapConfigs);
    chanCfg = &(trackConfig->lapCountCfg);
    sample = processChannelSampleWithIntGetterNoarg(sample, chanCfg, getLapCount);
    chanCfg = &(trackConfig->lapTimeCfg);
@@ -334,16 +291,16 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
    chanCfg = &(trackConfig->sectorCfg);
    sample = processChannelSampleWithIntGetterNoarg(sample, chanCfg, getLastSector);
    chanCfg = &(trackConfig->sectorTimeCfg);
-   sample = processChannelSampleWithfloatGetterNoarg(sample, chanCfg, getLastSectorTimeInMinutes);
+   sample = processChannelSampleWithFloatGetterNoarg(sample, chanCfg, getLastSectorTimeInMinutes);
    chanCfg = &(trackConfig->predTimeCfg);
-   sample = processChannelSampleWithfloatGetterNoarg(sample, chanCfg, getPredictedTimeInMinutes);
+   sample = processChannelSampleWithFloatGetterNoarg(sample, chanCfg, getPredictedTimeInMinutes);
 }
 
 int populate_sample_buffer(ChannelSample * samples,  size_t count, size_t currentTicks) {
    unsigned short highestRate = SAMPLE_DISABLED;
 
    for (size_t i = 0; i < count; i++, samples++) {
-      const unsigned short sampleRate = samples->sampleRate;
+      const unsigned short sampleRate = samples->cfg->sampleRate;
 
       // Zero out the sample for sanity
       samples->valueLongLong = 0ll;
@@ -356,27 +313,27 @@ int populate_sample_buffer(ChannelSample * samples,  size_t count, size_t curren
 
       switch(samples->sampleData) {
       case SampleData_Int_Noarg:
-         samples->valueInt = samples->get_int_sample();
+         samples->valueInt = samples->get_int_sample_noarg();
          break;
       case SampleData_Int:
          samples->valueInt = samples->get_int_sample(channelIndex);
          break;
       case SampleData_LongLong_Noarg:
-         samples->valueLongLong = samples->get_ll_sample();
+         samples->valueLongLong = samples->get_longlong_sample_noarg();
          break;
       case SampleData_LongLong:
-         samples->valueLongLong = samples->get_ll_sample(channelIndex);
+         samples->valueLongLong = samples->get_longlong_sample(channelIndex);
          break;
       case SampleData_Float_Noarg:
-         samples->valueFloat = samples->get_float_sample();
+         samples->valueFloat = samples->get_float_sample_noarg();
          break;
       case SampleData_Float:
          samples->valueFloat = samples->get_float_sample(channelIndex);
          break;
       case SampleData_Double_Noarg:
-         samples->valueDouble = samples->get_double_sample();
+         samples->valueDouble = samples->get_double_sample_noarg();
          break;
-      case SampleData_Float:
+      case SampleData_Double:
          samples->valueDouble = samples->get_double_sample(channelIndex);
          break;
       default:

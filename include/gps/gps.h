@@ -119,6 +119,8 @@ DateTime getLastFixDateTime();
  */
 millis_t getMillisSinceEpoch();
 
+long long getMillisSinceEpochAsLongLong();
+
 /**
  * This exists for backwards compatibility and will be deprecated in the future.  Use
  * #getLastFixDateTime() or #getMillisSinceEpoch() instead if possible.

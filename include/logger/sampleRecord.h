@@ -41,10 +41,10 @@ typedef struct _ChannelSample {
       long long (*get_longlong_sample)(int);
       float (*get_float_sample)(int);
       double (*get_double_sample)(int);
-      int (*get_int_sample_noarg)(int);
-      long long (*get_ll_sample_noarg)(int);
-      float (*get_float_sample_noarg)(int);
-      double (*get_double_sample_noarg)(int);
+      int (*get_int_sample_noarg)();
+      long long (*get_longlong_sample_noarg)();
+      float (*get_float_sample_noarg)();
+      double (*get_double_sample_noarg)();
    };
 
    union {

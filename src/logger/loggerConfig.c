@@ -6,12 +6,16 @@
 
 #ifndef RCP_TESTING
 #include "memory.h"
+// STIEG: RESTORE DEFAULT_LOGGER_CONFIG
 static const LoggerConfig g_savedLoggerConfig  __attribute__((section(".config\n\t#"))) = DEFAULT_LOGGER_CONFIG;
+//static const LoggerConfig g_savedLoggerConfig  __attribute__((section(".config\n\t#")));
 #else
 static LoggerConfig g_savedLoggerConfig = DEFAULT_LOGGER_CONFIG;
+//static LoggerConfig g_savedLoggerConfig;
 #endif
 
 static const LoggerConfig g_defaultLoggerConfig = DEFAULT_LOGGER_CONFIG;
+//static const LoggerConfig g_defaultLoggerConfig;
 
 static LoggerConfig g_workingLoggerConfig;
 
@@ -23,28 +27,6 @@ static int firmware_version_matches_last(){
 	const VersionInfo * version = &g_savedLoggerConfig.RcpVersionInfo;
 	return version->major == MAJOR_REV && version->minor == MINOR_REV && version->bugfix == BUGFIX_REV;
 }
-
-unsigned char get_channel_type(const ChannelConfig *channel){
-   // STIEG: Clean this up.
-	unsigned char channelType = CHANNEL_TYPE_UNKNOWN;
-	if (channel){
-		channelType = channel->flags >> 1;
-	}
-	return channelType;
-}
-
-int is_channel_type(const Channel *channel, unsigned char type){
-	return (channel != NULL && (((channel->flags >> 1) & 0xF) == type ));
-}
-
-void set_channel_type(Channel *channel, unsigned char type){
-	if (channel != NULL) channel->flags = ((type & 0xF) << 1) + (channel->flags & 0x1);
-}
-
-int is_system_channel(const Channel *channel){
-	return channel != NULL && (channel->flags & (1 << CHANNEL_SYSTEM_CHANNEL_FLAG));
-}
-
 
 int flash_default_logger_config(void){
 	pr_info("flashing default logger config...");
@@ -357,11 +339,21 @@ unsigned int getHighestSampleRate(LoggerConfig *config){
 		int sr = config->ImuConfigs[i].cfg.sampleRate;
 		if HIGHER_SAMPLE(sr, s) s = sr;
 	}
+
 	GPSConfig *gpsConfig = &(config->GPSConfigs);
 	{
 		//TODO this represents "Position sample rate".
-		int sr = gpsConfig->sampleRate;
+		int sr = gpsConfig->latitude.sampleRate;
 		if HIGHER_SAMPLE(sr, s) s = sr;
+		sr = gpsConfig->longitude.sampleRate;
+		if HIGHER_SAMPLE(sr, s) s = sr;
+		sr = gpsConfig->speed.sampleRate;
+		if HIGHER_SAMPLE(sr, s) s = sr;
+		sr = gpsConfig->distance.sampleRate;
+		if HIGHER_SAMPLE(sr, s) s = sr;
+		sr = gpsConfig->satellites.sampleRate;
+		if HIGHER_SAMPLE(sr, s) s = sr;
+
 	}
 	LapConfig *trackCfg = &(config->LapConfigs);
 	{
@@ -414,13 +406,12 @@ size_t get_enabled_channel_count(LoggerConfig *loggerConfig){
 	channels+=loggerConfig->OBD2Configs.enabledPids;
 
 	GPSConfig *gpsConfigs = &loggerConfig->GPSConfigs;
-	if (gpsConfigs->sampleRate != SAMPLE_DISABLED){
-		if (gpsConfigs->positionEnabled) channels+=2;
-		if (gpsConfigs->speedEnabled) channels++;
-		if (gpsConfigs->timeEnabled != SAMPLE_DISABLED) channels++;
-		if (gpsConfigs->satellitesEnabled != SAMPLE_DISABLED) channels++;
-		if (gpsConfigs->distanceEnabled != SAMPLE_DISABLED) channels++;
-	}
+   if (gpsConfigs->latitude.sampleRate != SAMPLE_DISABLED) channels++;
+   if (gpsConfigs->longitude.sampleRate != SAMPLE_DISABLED) channels++;
+   if (gpsConfigs->speed.sampleRate != SAMPLE_DISABLED) channels++;
+   if (gpsConfigs->distance.sampleRate != SAMPLE_DISABLED) channels++;
+   if (gpsConfigs->satellites.sampleRate != SAMPLE_DISABLED) channels++;
+
 
 	LapConfig *lapConfig = &loggerConfig->LapConfigs;
 	if (lapConfig->lapCountCfg.sampleRate != SAMPLE_DISABLED) channels++;
