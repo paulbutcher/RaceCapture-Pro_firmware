@@ -79,7 +79,7 @@ typedef struct _ScalingMap{
 	float scaledValues[ANALOG_SCALING_BINS];
 } ScalingMap;
 
-#define EMPTY_CHANNEL_CONFIG {"","", 0.0f, 0.0f, 0, 0}
+#define EMPTY_CHANNEL_CONFIG {"","", 0.0f, 0.0f, SAMPLE_DISABLED, 0}
 
 enum TimeType {
    TimeType_Uptime,
@@ -91,14 +91,16 @@ struct TimeConfig {
    enum TimeType tt;
 };
 
-// STIEG: Define channel configs here for time
 
-#define DEFAULT_UPTIME_CONFIG {EMPTY_CHANNEL_CONFIG, TimeType_Uptime}
-#define DEFAULT_UTC_MILLIS_CONFIG {EMPTY_CHANNEL_CONFIG, TimeType_UtcMillis}
+#define DEFAULT_UPTIME_CONFIG {"Interval", "ms", 0, 0, SAMPLE_DISABLED, 0}
+#define DEFAULT_UTC_MILLIS_CONFIG {"Utc", "ms", 0, 0, SAMPLE_DISABLED, 0}
+
+#define DEFAULT_UPTIME_TIME_CONFIG {DEFAULT_UPTIME_CONFIG, TimeType_Uptime}
+#define DEFAULT_UTC_MILLIS_TIME_CONFIG {DEFAULT_UTC_MILLIS_CONFIG, TimeType_UtcMillis}
 #define DEFAULT_TIME_CONFIGS                    \
    {                                            \
-      DEFAULT_UPTIME_CONFIG,                    \
-      DEFAULT_UTC_MILLIS_CONFIG                 \
+      DEFAULT_UPTIME_TIME_CONFIG,                    \
+      DEFAULT_UTC_MILLIS_TIME_CONFIG                 \
    }
 
 typedef struct _ADCConfig{
@@ -114,6 +116,9 @@ typedef struct _ADCConfig{
 
 #define DEFAULT_SCALING_MAP {{0,256,512,768,1023},{0,1.25,2.5,3.75,5.0}}
 
+// Define channel config for battery
+#define DEFAULT_BATTERY_CONFIG {"Battery", "Volts", 0, 20, SAMPLE_1Hz, 2}
+
 #define DEFAULT_ADC0_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
 #define DEFAULT_ADC1_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
 #define DEFAULT_ADC2_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
@@ -121,10 +126,7 @@ typedef struct _ADCConfig{
 #define DEFAULT_ADC4_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
 #define DEFAULT_ADC5_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
 #define DEFAULT_ADC6_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-
-// Define channel config for battery
-
-#define BATTERY_ADC7_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
+#define BATTERY_ADC7_CONFIG {DEFAULT_BATTERY_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
 #define DEFAULT_ADC_CONFIGS \
 			{ \
 			DEFAULT_ADC0_CONFIG, \
@@ -148,7 +150,7 @@ typedef struct _TimerConfig{
 } TimerConfig;
 
 
-#define MODE_LOGGING_TIMER_RPM				0
+#define MODE_LOGGING_TIMER_RPM		        0
 #define MODE_LOGGING_TIMER_FREQUENCY		1
 #define MODE_LOGGING_TIMER_PERIOD_MS		2
 #define MODE_LOGGING_TIMER_PERIOD_USEC		3
@@ -164,8 +166,6 @@ typedef struct _TimerConfig{
 #define TIMER_MCK_32 		32
 #define TIMER_MCK_128 		128
 #define TIMER_MCK_1024 		1024
-
-// Stieg: Define ChannelConfig for RPM
 
 #define DEFAULT_RPM_TIMER_CONFIG  {EMPTY_CHANNEL_CONFIG, 0, MODE_LOGGING_TIMER_RPM,       1.0F, 1, TIMER_MCK_128, 375428}
 #define DEFAULT_FREQUENCY2_CONFIG {EMPTY_CHANNEL_CONFIG, 0, MODE_LOGGING_TIMER_FREQUENCY, 1.0F, 1, TIMER_MCK_128, 375428}
@@ -219,11 +219,15 @@ typedef struct _ImuConfig{
 #define DEFAULT_GYRO_ZERO					1862 //LY330ALH zero state voltage output is 1.5v
 
 // STIEG Do ChannelConfig for Accel{X,Y,Z} and Yaw.  Sampe at 25Hz
+#define DEFAULT_ACCEL_X_CONFIG {"AccelX", "G", -3, 3, SAMPLE_25Hz, 2}
+#define DEFAULT_ACCEL_Y_CONFIG {"AccelY", "G", -3, 3, SAMPLE_25Hz, 2}
+#define DEFAULT_ACCEL_Z_CONFIG {"AccelZ", "G", -3, 3, SAMPLE_25Hz, 2}
+#define DEFAULT_YAW_CONFIG {"Yaw", "Deg/Sec", -300, 300, SAMPLE_25Hz, 1}
 
-#define DEFAULT_ACCEL_X_AXIS_CONFIG  {EMPTY_CHANNEL_CONFIG, MODE_IMU_NORMAL, IMU_CHANNEL_X,DEFAULT_ACCEL_ZERO, 0.1F}
-#define DEFAULT_ACCEL_Y_AXIS_CONFIG  {EMPTY_CHANNEL_CONFIG, MODE_IMU_NORMAL, IMU_CHANNEL_Y,DEFAULT_ACCEL_ZERO, 0.1F}
-#define DEFAULT_ACCEL_Z_AXIS_CONFIG  {EMPTY_CHANNEL_CONFIG, MODE_IMU_NORMAL, IMU_CHANNEL_Z,DEFAULT_ACCEL_ZERO, 0.1F}
-#define DEFAULT_GYRO_YAW_AXIS_CONFIG {EMPTY_CHANNEL_CONFIG, MODE_IMU_NORMAL, IMU_CHANNEL_YAW,DEFAULT_GYRO_ZERO, 0.1F}
+#define DEFAULT_ACCEL_X_AXIS_CONFIG  {DEFAULT_ACCEL_X_CONFIG, MODE_IMU_NORMAL, IMU_CHANNEL_X,DEFAULT_ACCEL_ZERO, 0.1F}
+#define DEFAULT_ACCEL_Y_AXIS_CONFIG  {DEFAULT_ACCEL_Y_CONFIG, MODE_IMU_NORMAL, IMU_CHANNEL_Y,DEFAULT_ACCEL_ZERO, 0.1F}
+#define DEFAULT_ACCEL_Z_AXIS_CONFIG  {DEFAULT_ACCEL_Z_CONFIG, MODE_IMU_NORMAL, IMU_CHANNEL_Z,DEFAULT_ACCEL_ZERO, 0.1F}
+#define DEFAULT_GYRO_YAW_AXIS_CONFIG {DEFAULT_YAW_CONFIG, MODE_IMU_NORMAL, IMU_CHANNEL_YAW,DEFAULT_GYRO_ZERO, 0.1F}
 #define DEFAULT_IMU_CONFIGS \
 			{ \
 				DEFAULT_ACCEL_X_AXIS_CONFIG, \
@@ -242,7 +246,7 @@ typedef struct _PWMConfig{
 
 /// PWM frequency in Hz.
 #define MAX_PWM_CLOCK_FREQUENCY             200000
-#define MIN_PWM_CLOCK_FREQUENCY				10
+#define MIN_PWM_CLOCK_FREQUENCY	 	10
 #define DEFAULT_PWM_CLOCK_FREQUENCY			10000
 
 /// Maximum duty cycle value.
@@ -334,7 +338,6 @@ typedef struct _CANConfig{
 	DEFAULT_CAN_BAUD_RATE \
 }
 
-// STIEG: Add configs here for GPS since needed.
 typedef struct _GPSConfig{
    ChannelConfig latitude;
    ChannelConfig longitude;
@@ -343,15 +346,26 @@ typedef struct _GPSConfig{
    ChannelConfig satellites;
 } GPSConfig;
 
-// STIEG: Do ChannelConfig for GPS
+//HACK: FIX ME for MARK3
+#if (MAX_GPS_SAMPLE_RATE == 10)
+#define MAX_GPS_SAMPLE_HZ SAMPLE_10Hz
+#else
+#define MAX_GPS_SAMPLE_HZ SAMPLE_50Hz
+#endif
 
-#define DEFAULT_GPS_CONFIG { \
-   EMPTY_CHANNEL_CONFIG,     \
-   EMPTY_CHANNEL_CONFIG,     \
-   EMPTY_CHANNEL_CONFIG,     \
-   EMPTY_CHANNEL_CONFIG,     \
-   EMPTY_CHANNEL_CONFIG      \
- }
+#define DEFAULT_GPS_LATITUDE_CONFIG {"Latitude", "Degrees", -180, 180, MAX_GPS_SAMPLE_HZ, 6}
+#define DEFAULT_GPS_LONGITUDE_CONFIG {"Longitude", "Degrees", -180, 180, MAX_GPS_SAMPLE_HZ, 6}
+#define DEFAULT_GPS_SPEED_CONFIG {"Speed", "MPH", 0, 150, MAX_GPS_SAMPLE_HZ, 2}
+#define DEFAULT_GPS_DISTANCE_CONFIG {"Distance", "Miles", 0, 0, MAX_GPS_SAMPLE_HZ, 3}
+#define DEFAULT_GPS_SATELLITE_CONFIG {"GPSSats", "", 0, 100, MAX_GPS_SAMPLE_HZ, 0}
+
+#define DEFAULT_GPS_CONFIG {                    \
+      DEFAULT_GPS_LATITUDE_CONFIG,              \
+         DEFAULT_GPS_LONGITUDE_CONFIG,          \
+         DEFAULT_GPS_SPEED_CONFIG,              \
+         DEFAULT_GPS_DISTANCE_CONFIG,           \
+         DEFAULT_GPS_SATELLITE_CONFIG           \
+         }
 
 typedef struct _LapConfig{
 	ChannelConfig lapCountCfg;
@@ -361,13 +375,11 @@ typedef struct _LapConfig{
 	ChannelConfig predTimeCfg;
 } LapConfig;
 
-#define DEFAULT_LAP_COUNT_CONFIG {CHANNEL_LapCount, SAMPLE_1Hz}
-#define DEFAULT_LAP_TIME_CONFIG {CHANNEL_LapTime, SAMPLE_1Hz}
-#define DEFAULT_SECTOR_CONFIG {CHANNEL_Sector, SAMPLE_1Hz}
-#define DEFAULT_SECTOR_TIME_CONFIG {CHANNEL_SectorTime, SAMPLE_1Hz}
-#define DEFAULT_PRED_TIME_CONFIG {CHANNEL_PredTime, SAMPLE_DISABLED}
-
-// STIEG: Do ChannelConfig for LapConfig
+#define DEFAULT_LAP_COUNT_CONFIG {"LapCount", "", 0, 0, SAMPLE_1Hz, 0}
+#define DEFAULT_LAP_TIME_CONFIG {"LapTime", "Min", 0, 0, SAMPLE_1Hz, 4}
+#define DEFAULT_SECTOR_CONFIG {"Sector", "", 0, 0, SAMPLE_1Hz, 4}
+#define DEFAULT_SECTOR_TIME_CONFIG {"SectorTime", "Min", 0, 0, SAMPLE_1Hz, 4}
+#define DEFAULT_PRED_TIME_CONFIG {"PredTime", "Min", 0, 0, SAMPLE_1Hz, 4}}
 
 #define DEFAULT_LAP_CONFIG { \
    EMPTY_CHANNEL_CONFIG,     \
@@ -549,22 +561,22 @@ typedef struct _LoggerConfig {
 
 #define DEFAULT_LOGGER_CONFIG                   \
    {                                            \
-   DEFAULT_VERSION_INFO,                        \
-      DEFAULT_PWM_CLOCK_FREQUENCY,              \
-      DEFAULT_TIME_CONFIGS,                     \
-      DEFAULT_ADC_CONFIGS,                   \
-DEFAULT_PWM_CONFIGS,           \
-   DEFAULT_GPIO_CONFIGS,       \
-   DEFAULT_TIMER_CONFIGS,      \
-   DEFAULT_IMU_CONFIGS,        \
-   DEFAULT_CAN_CONFIG,         \
-   DEFAULT_OBD2_CONFIG,        \
-   DEFAULT_GPS_CONFIG,         \
-   DEFAULT_LAP_CONFIG,         \
-   DEFAULT_TRACK_CONFIG,        \
-   DEFAULT_CONNECTIVITY_CONFIG, \
-   ""                           \
-   }
+      DEFAULT_VERSION_INFO,                     \
+         DEFAULT_PWM_CLOCK_FREQUENCY,           \
+         DEFAULT_TIME_CONFIGS,                  \
+         DEFAULT_ADC_CONFIGS,                   \
+         DEFAULT_PWM_CONFIGS,                   \
+         DEFAULT_GPIO_CONFIGS,                  \
+         DEFAULT_TIMER_CONFIGS,                 \
+         DEFAULT_IMU_CONFIGS,                   \
+         DEFAULT_CAN_CONFIG,                    \
+         DEFAULT_OBD2_CONFIG,                   \
+         DEFAULT_GPS_CONFIG,                    \
+         DEFAULT_LAP_CONFIG,                    \
+         DEFAULT_TRACK_CONFIG,                  \
+         DEFAULT_CONNECTIVITY_CONFIG,           \
+         ""                                     \
+         }
 
 
 void initialize_logger_config();
