@@ -1011,59 +1011,6 @@ void LoggerApiTest::testGetTrackDbFile(string filename, string addedFilename){
 	}
 }
 
-
-
-void LoggerApiTest::testAddChannel(){
-	testAddChannelFile("addChannel1.json");
-}
-
-void LoggerApiTest::testAddChannelFile(string filename){
-	processApiGeneric(filename);
-	char *txBuffer = mock_getTxBuffer();
-	const Channels *channels = get_channels();
-
-	Object jsonCompare;
-	string compare = readFile(filename);
-	stringToJson(compare, jsonCompare);
-
-	int index = (int)(Number)jsonCompare["addChannel"]["index"];
-	const Channel *channel = channels->channels + index;
-	CPPUNIT_ASSERT_EQUAL(string((String)jsonCompare["addChannel"]["channel"]["nm"]), string(channel->label));
-	CPPUNIT_ASSERT_EQUAL(string((String)jsonCompare["addChannel"]["channel"]["ut"]), string(channel->units));
-	CPPUNIT_ASSERT_EQUAL((int)(Number)jsonCompare["addChannel"]["channel"]["prec"], (int)channel->precision);
-	CPPUNIT_ASSERT_EQUAL((int)(Number)jsonCompare["addChannel"]["channel"]["type"], (int)get_channel_type(channel));
-	CPPUNIT_ASSERT_EQUAL((int)(Number)jsonCompare["addChannel"]["channel"]["sys"], (int)is_system_channel(channel));
-	CPPUNIT_ASSERT_EQUAL((float)(Number)jsonCompare["addChannel"]["channel"]["min"], channel->min);
-	CPPUNIT_ASSERT_EQUAL((float)(Number)jsonCompare["addChannel"]["channel"]["max"], channel->max);
-}
-
-void LoggerApiTest::testGetChannels(){
-	testGetChannelsFile("getChannels1.json");
-}
-
-void LoggerApiTest::testGetChannelsFile(string filename){
-
-	char * response = processApiGeneric(filename);
-
-	Object json;
-	stringToJson(response, json);
-
-	Object jsonCompare;
-	string compare= readFile("../include/channels/system_channels.json");
-	stringToJson(compare, jsonCompare);
-
-	Array channelsCompare = jsonCompare["channels"];
-	Array channelsResponse = json["channels"];
-
-	CPPUNIT_ASSERT_EQUAL(channelsCompare.Size(), channelsResponse.Size());
-	CPPUNIT_ASSERT_EQUAL(MAX_CHANNEL_COUNT, (int)(Number)json["max"]);
-	for (int i = 0; i < channelsCompare.Size(); i++){
-		Object channelCompare = channelsCompare[i];
-		Object channel = channelsResponse[i];
-		CPPUNIT_ASSERT_EQUAL((string)(String)channelCompare["nm"], (string)(String)channel["nm"]);
-	}
-}
-
 void LoggerApiTest::testSetLogLevelFile(string filename, int expectedResponse){
 	processApiGeneric(filename);
 
@@ -1123,15 +1070,16 @@ void LoggerApiTest::testGetObd2ConfigFile(string filename){
 	LoggerConfig *c = getWorkingLoggerConfig();
 	OBD2Config *obd2Config = &c->OBD2Configs;
 
+	obd2Config->enabled = 1;
 	obd2Config->enabledPids = 2;
-	obd2Config->pids[0].cfg.channeId = CHANNEL_AFR;
-	obd2Config->pids[0].cfg.sampleRate = SAMPLE_1Hz;
+
+        ChannelConfig *cfg1 = &obd2Config->pids[0].cfg;
+        populateChannelConfig(cfg1, 1, 1);
 	obd2Config->pids[0].pid = 0x05;
 
-	obd2Config->pids[1].cfg.channeId = CHANNEL_Boost;
-	obd2Config->pids[1].cfg.sampleRate = SAMPLE_50Hz;
+        ChannelConfig *cfg2 = &obd2Config->pids[1].cfg;
+        populateChannelConfig(cfg2, 2, 50);
 	obd2Config->pids[1].pid = 0x06;
-	obd2Config->enabled = 1;
 
 	char * response = processApiGeneric(filename);
 
@@ -1141,14 +1089,16 @@ void LoggerApiTest::testGetObd2ConfigFile(string filename){
 	Object pid1 = (Object)json["obd2Cfg"]["pids"][0];
 	Object pid2 = (Object)json["obd2Cfg"]["pids"][1];
 
-	CPPUNIT_ASSERT_EQUAL(1, (int)(Number)json["obd2Cfg"]["en"]);
-	CPPUNIT_ASSERT_EQUAL((int)CHANNEL_AFR, (int)(Number)pid1["id"]);
-	CPPUNIT_ASSERT_EQUAL(decodeSampleRate(SAMPLE_1Hz), (int)(Number)pid1["sr"]);
+        string str1 = string("1");
+        string str2 = string("2");
+
+        checkChannelConfig(pid1, 1, str1, 1);
 	CPPUNIT_ASSERT_EQUAL(0x05, (int)(Number)pid1["pid"]);
 
-	CPPUNIT_ASSERT_EQUAL((int)CHANNEL_Boost, (int)(Number)pid2["id"]);
-	CPPUNIT_ASSERT_EQUAL(decodeSampleRate(SAMPLE_50Hz), (int)(Number)pid2["sr"]);
+        checkChannelConfig(pid2, 2, str2, 50);
 	CPPUNIT_ASSERT_EQUAL(0x06, (int)(Number)pid2["pid"]);
+
+	CPPUNIT_ASSERT_EQUAL(1, (int)(Number)json["obd2Cfg"]["en"]);
 }
 
 void LoggerApiTest::testSetObd2ConfigFile(string filename){
@@ -1164,12 +1114,22 @@ void LoggerApiTest::testSetObd2ConfigFile(string filename){
 	PidConfig *pidCfg1 = &obd2Config->pids[0];
 	PidConfig *pidCfg2 = &obd2Config->pids[1];
 
-	CPPUNIT_ASSERT_EQUAL(19, (int)pidCfg1->cfg.channeId);
-	CPPUNIT_ASSERT_EQUAL((int)SAMPLE_10Hz, (int)pidCfg1->cfg.sampleRate);
+        ChannelConfig *cfg = &pidCfg1->cfg;
+        CPPUNIT_ASSERT_EQUAL(string("I <3 OBD2"), string(cfg->label));
+        CPPUNIT_ASSERT_EQUAL(string("?????"), string(cfg->units));
+        CPPUNIT_ASSERT_EQUAL(-1.0f, cfg->min);
+        CPPUNIT_ASSERT_EQUAL(1.0f, cfg->max);
+	CPPUNIT_ASSERT_EQUAL(10, decodeSampleRate(cfg->sampleRate));
+	CPPUNIT_ASSERT_EQUAL(1, (int)cfg->precision);
 	CPPUNIT_ASSERT_EQUAL(5, (int)pidCfg1->pid);
 
-	CPPUNIT_ASSERT_EQUAL(26, (int)pidCfg2->cfg.channeId);
-	CPPUNIT_ASSERT_EQUAL((int)SAMPLE_5Hz, (int)pidCfg2->cfg.sampleRate);
+        cfg = &pidCfg2->cfg;
+        CPPUNIT_ASSERT_EQUAL(string("I <3 OBD2"), string(cfg->label));
+        CPPUNIT_ASSERT_EQUAL(string("?????"), string(cfg->units));
+        CPPUNIT_ASSERT_EQUAL(-1.0f, cfg->min);
+        CPPUNIT_ASSERT_EQUAL(1.0f, cfg->max);
+	CPPUNIT_ASSERT_EQUAL(10, decodeSampleRate(cfg->sampleRate));
+	CPPUNIT_ASSERT_EQUAL(1, (int)cfg->precision);
 	CPPUNIT_ASSERT_EQUAL(6, (int)pidCfg2->pid);
 }
 
