@@ -234,7 +234,7 @@ static void json_channelConfig(Serial *serial, ChannelConfig *cfg, int more) {
 	json_string(serial, "ut", cfg->units, 1);
 	json_float(serial, "min", cfg->min, cfg->precision, 1);
 	json_float(serial, "min", cfg->max, cfg->precision, 1);
-   json_int(serial, "prec", (int) cfg->precision, 1);
+        json_int(serial, "prec", (int) cfg->precision, 1);
 	json_int(serial, "sr", decodeSampleRate(cfg->sampleRate), more);
 }
 

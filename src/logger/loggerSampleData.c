@@ -227,35 +227,35 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
    sample = processChannelSampleWithLongLongGetterNoarg(sample, chanCfg, getMillisSinceEpochAsLongLong);
 
 
-	for (int i=0; i < CONFIG_ADC_CHANNELS; i++) {
-		ADCConfig *config = &(loggerConfig->ADCConfigs[i]);
+   for (int i=0; i < CONFIG_ADC_CHANNELS; i++) {
+      ADCConfig *config = &(loggerConfig->ADCConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_analog_sample);
-	}
+   }
 
-	for (int i = 0; i < CONFIG_IMU_CHANNELS; i++) {
-		ImuConfig *config = &(loggerConfig->ImuConfigs[i]);
+   for (int i = 0; i < CONFIG_IMU_CHANNELS; i++) {
+      ImuConfig *config = &(loggerConfig->ImuConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_imu_sample);
-	}
+   }
 
-	for (int i=0; i < CONFIG_TIMER_CHANNELS; i++) {
-		TimerConfig *config = &(loggerConfig->TimerConfigs[i]);
+   for (int i=0; i < CONFIG_TIMER_CHANNELS; i++) {
+      TimerConfig *config = &(loggerConfig->TimerConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_timer_sample);
-	}
+   }
 
-	for (int i=0; i < CONFIG_GPIO_CHANNELS; i++) {
-		GPIOConfig *config = &(loggerConfig->GPIOConfigs[i]);
+   for (int i=0; i < CONFIG_GPIO_CHANNELS; i++) {
+      GPIOConfig *config = &(loggerConfig->GPIOConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithIntGetter(sample, chanCfg, i, GPIO_get);
-	}
+   }
 
-	for (int i=0; i < CONFIG_PWM_CHANNELS; i++) {
-		PWMConfig *config = &(loggerConfig->PWMConfigs[i]);
+   for (int i=0; i < CONFIG_PWM_CHANNELS; i++) {
+      PWMConfig *config = &(loggerConfig->PWMConfigs[i]);
       chanCfg = &(config->cfg);
       sample = processChannelSampleWithFloatGetter(sample, chanCfg, i, get_pwm_sample);
-	}
+   }
 
    OBD2Config *obd2Config = &(loggerConfig->OBD2Configs);
    for (size_t i = 0; i < obd2Config->enabledPids; i++) {

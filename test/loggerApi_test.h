@@ -12,6 +12,7 @@
 #include "json/reader.h"
 #include "json/writer.h"
 #include "json/elements.h"
+#include "loggerConfig.h"
 
 using namespace json;
 using std::string;
@@ -144,7 +145,9 @@ private:
   void testSetCanCfgFile(string filename);
   void testGetObd2ConfigFile(string filename);
   void testSetObd2ConfigFile(string filename);
-
+  void populateChannelConfig(ChannelConfig *cfg, const int id, const int splRt);
+  void checkChannelConfig(Object &json, const int i, string &iString, const int splRt);
+  void testChannelConfig(ChannelConfig *chCfg, string expNm, string expUt, unsigned short sr);
 };
 
 
