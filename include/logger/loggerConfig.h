@@ -91,9 +91,9 @@ struct TimeConfig {
    enum TimeType tt;
 };
 
-
-#define DEFAULT_UPTIME_CONFIG {"Interval", "ms", 0, 0, SAMPLE_DISABLED, 0}
-#define DEFAULT_UTC_MILLIS_CONFIG {"Utc", "ms", 0, 0, SAMPLE_DISABLED, 0}
+// Default to lowest active sample rate.  This will change in code later.
+#define DEFAULT_UPTIME_CONFIG {"Interval", "ms", 0, 0, SAMPLE_1Hz, 0}
+#define DEFAULT_UTC_MILLIS_CONFIG {"Utc", "ms", 0, 0, SAMPLE_1Hz, 0}
 
 #define DEFAULT_UPTIME_TIME_CONFIG {DEFAULT_UPTIME_CONFIG, TimeType_Uptime}
 #define DEFAULT_UTC_MILLIS_TIME_CONFIG {DEFAULT_UTC_MILLIS_CONFIG, TimeType_UtcMillis}
