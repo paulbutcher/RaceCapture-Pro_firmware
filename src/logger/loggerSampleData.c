@@ -1,4 +1,5 @@
 #include "dateTime.h"
+#include "GPIO.h"
 #include "loggerSampleData.h"
 #include "loggerHardware.h"
 #include "loggerConfig.h"
@@ -88,12 +89,6 @@ static ChannelSample* processChannelSampleWithLongLongGetterNoarg(ChannelSample 
 
 /* XXX Implement custom data getters here XXX */
 
-static float getPredictedTimeInMinutes() {
-   const GeoPoint gp = getGeoPoint();
-   const tiny_millis_t millis = getMillisSinceFirstFix();
-   return tinyMillisToMinutes(getPredictedTime(gp, millis));
-}
-
 float get_mapped_value(float value, ScalingMap *scalingMap) {
 	unsigned short *bins;
 	unsigned int bin, nextBin;
@@ -125,7 +120,7 @@ float get_mapped_value(float value, ScalingMap *scalingMap) {
 	return scaled;
 }
 
-static float get_analog_sample(int channelId){
+float get_analog_sample(int channelId){
 	LoggerConfig * loggerConfig = getWorkingLoggerConfig();
 	ADCConfig *ac = &(loggerConfig->ADCConfigs[channelId]);
 	float value = ADC_read(channelId);
@@ -147,7 +142,7 @@ static float get_analog_sample(int channelId){
 	return analogValue;
 }
 
-static float get_timer_sample(int channelId){
+float get_timer_sample(int channelId){
 	LoggerConfig *loggerConfig = getWorkingLoggerConfig();
 	TimerConfig *c = &(loggerConfig->TimerConfigs[channelId]);
 	unsigned int value = timer_get_period(channelId);
@@ -173,7 +168,7 @@ static float get_timer_sample(int channelId){
 	return timerValue;
 }
 
-static float get_pwm_sample(int channelId){
+float get_pwm_sample(int channelId){
 	LoggerConfig *loggerConfig = getWorkingLoggerConfig();
 	PWMConfig *c = &(loggerConfig->PWMConfigs[channelId]);
 	float pwmValue = 0;
@@ -194,7 +189,7 @@ static float get_pwm_sample(int channelId){
 	return pwmValue;
 }
 
-static float get_imu_sample(int channelId){
+float get_imu_sample(int channelId){
 	LoggerConfig *config = getWorkingLoggerConfig();
 	ImuConfig *c = &(config->ImuConfigs[channelId]);
 	float value = imu_read_value(channelId, c);
