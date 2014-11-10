@@ -97,11 +97,11 @@ struct TimeConfig {
 
 #define DEFAULT_UPTIME_TIME_CONFIG {DEFAULT_UPTIME_CONFIG, TimeType_Uptime}
 #define DEFAULT_UTC_MILLIS_TIME_CONFIG {DEFAULT_UTC_MILLIS_CONFIG, TimeType_UtcMillis}
-#define DEFAULT_TIME_CONFIGS                    \
-   {                                            \
+#define DEFAULT_TIME_CONFIGS                         \
+   {                                                 \
       DEFAULT_UPTIME_TIME_CONFIG,                    \
-      DEFAULT_UTC_MILLIS_TIME_CONFIG                 \
-   }
+         DEFAULT_UTC_MILLIS_TIME_CONFIG              \
+         }
 
 typedef struct _ADCConfig{
 	ChannelConfig cfg;
@@ -119,25 +119,37 @@ typedef struct _ADCConfig{
 // Define channel config for battery
 #define DEFAULT_BATTERY_CONFIG {"Battery", "Volts", 0, 20, SAMPLE_1Hz, 2}
 
-#define DEFAULT_ADC0_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-#define DEFAULT_ADC1_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-#define DEFAULT_ADC2_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-#define DEFAULT_ADC3_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-#define DEFAULT_ADC4_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-#define DEFAULT_ADC5_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-#define DEFAULT_ADC6_CONFIG {EMPTY_CHANNEL_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-#define BATTERY_ADC7_CONFIG {DEFAULT_BATTERY_CONFIG, DEFAULT_SCALING, 0, 1.0f, DEFAULT_SCALING_MODE, DEFAULT_SCALING_MAP}
-#define DEFAULT_ADC_CONFIGS \
-			{ \
-			DEFAULT_ADC0_CONFIG, \
-			DEFAULT_ADC1_CONFIG, \
-			DEFAULT_ADC2_CONFIG, \
-			DEFAULT_ADC3_CONFIG, \
-			DEFAULT_ADC4_CONFIG, \
-			DEFAULT_ADC5_CONFIG, \
-			DEFAULT_ADC6_CONFIG, \
-			BATTERY_ADC7_CONFIG  \
-			}
+#define DEFAULT_ADC_CONFIG                      \
+   {                                            \
+      EMPTY_CHANNEL_CONFIG,                     \
+         DEFAULT_SCALING,                       \
+         0,                                     \
+         1.0f,                                  \
+         DEFAULT_SCALING_MODE,                  \
+         DEFAULT_SCALING_MAP                    \
+         }
+
+#define BATTERY_ADC_CONFIG                      \
+   {                                            \
+      DEFAULT_BATTERY_CONFIG,                   \
+         DEFAULT_SCALING,                       \
+         0,                                     \
+         1.0f,                                  \
+         DEFAULT_SCALING_MODE,                  \
+         DEFAULT_SCALING_MAP                    \
+         }
+
+#define DEFAULT_ADC_CONFIGS                     \
+   {                                            \
+      DEFAULT_ADC_CONFIG,                       \
+         DEFAULT_ADC_CONFIG,                    \
+         DEFAULT_ADC_CONFIG,                    \
+         DEFAULT_ADC_CONFIG,                    \
+         DEFAULT_ADC_CONFIG,                    \
+         DEFAULT_ADC_CONFIG,                    \
+         DEFAULT_ADC_CONFIG,                    \
+         BATTERY_ADC_CONFIG                     \
+         }
 
 typedef struct _TimerConfig{
 	ChannelConfig cfg;
@@ -167,14 +179,16 @@ typedef struct _TimerConfig{
 #define TIMER_MCK_128 		128
 #define TIMER_MCK_1024 		1024
 
-#define DEFAULT_RPM_TIMER_CONFIG  {EMPTY_CHANNEL_CONFIG, 0, MODE_LOGGING_TIMER_RPM,       1.0F, 1, TIMER_MCK_128, 375428}
-#define DEFAULT_FREQUENCY2_CONFIG {EMPTY_CHANNEL_CONFIG, 0, MODE_LOGGING_TIMER_FREQUENCY, 1.0F, 1, TIMER_MCK_128, 375428}
-#define DEFAULT_FREQUENCY3_CONFIG {EMPTY_CHANNEL_CONFIG, 0, MODE_LOGGING_TIMER_FREQUENCY, 1.0F, 1, TIMER_MCK_128, 375428}
+#define DEFAULT_RPM_TIMER_CONFIG  {EMPTY_CHANNEL_CONFIG, 0, \
+         MODE_LOGGING_TIMER_RPM, 1.0F, 1, TIMER_MCK_128, 375428}
+#define DEFAULT_FREQUENCY_CONFIG {EMPTY_CHANNEL_CONFIG, 0, \
+         MODE_LOGGING_TIMER_FREQUENCY, 1.0F, 1, TIMER_MCK_128, 375428}
+
 #define DEFAULT_TIMER_CONFIGS \
 			{ \
 			DEFAULT_RPM_TIMER_CONFIG,  \
-			DEFAULT_FREQUENCY2_CONFIG, \
-			DEFAULT_FREQUENCY3_CONFIG  \
+			DEFAULT_FREQUENCY_CONFIG, \
+			DEFAULT_FREQUENCY_CONFIG  \
 			}
 
 typedef struct _GPIOConfig{
@@ -185,14 +199,13 @@ typedef struct _GPIOConfig{
 #define	CONFIG_GPIO_IN  					0
 #define CONFIG_GPIO_OUT  					1
 
-#define DEFAULT_GPIO1_CONFIG {EMPTY_CHANNEL_CONFIG, CONFIG_GPIO_IN}
-#define DEFAULT_GPIO2_CONFIG {EMPTY_CHANNEL_CONFIG, CONFIG_GPIO_IN}
-#define DEFAULT_GPIO3_CONFIG {EMPTY_CHANNEL_CONFIG, CONFIG_GPIO_IN}
+#define DEFAULT_GPIO_CONFIG {EMPTY_CHANNEL_CONFIG, CONFIG_GPIO_IN}
+
 #define DEFAULT_GPIO_CONFIGS \
 			{ \
-			DEFAULT_GPIO1_CONFIG, \
-			DEFAULT_GPIO2_CONFIG, \
-			DEFAULT_GPIO3_CONFIG  \
+			DEFAULT_GPIO_CONFIG, \
+			DEFAULT_GPIO_CONFIG, \
+			DEFAULT_GPIO_CONFIG  \
 			}
 
 typedef struct _ImuConfig{
@@ -266,17 +279,15 @@ typedef struct _PWMConfig{
 
 #define PWM_VOLTAGE_SCALING			0.05
 
-#define DEFAULT_PWM1_CONFIG {EMPTY_CHANNEL_CONFIG, MODE_PWM_FREQUENCY,MODE_LOGGING_PWM_DUTY,50,100}
-#define DEFAULT_PWM2_CONFIG {EMPTY_CHANNEL_CONFIG, MODE_PWM_FREQUENCY,MODE_LOGGING_PWM_DUTY,50,100}
-#define DEFAULT_PWM3_CONFIG {EMPTY_CHANNEL_CONFIG, MODE_PWM_FREQUENCY,MODE_LOGGING_PWM_DUTY,50,100}
-#define DEFAULT_PWM4_CONFIG {EMPTY_CHANNEL_CONFIG, MODE_PWM_FREQUENCY,MODE_LOGGING_PWM_DUTY,50,100}
-#define DEFAULT_PWM_CONFIGS \
-			{ \
-				DEFAULT_PWM1_CONFIG, \
-				DEFAULT_PWM2_CONFIG, \
-				DEFAULT_PWM3_CONFIG, \
-				DEFAULT_PWM4_CONFIG  \
-			}
+#define DEFAULT_PWM_CONFIG {EMPTY_CHANNEL_CONFIG, MODE_PWM_FREQUENCY,MODE_LOGGING_PWM_DUTY,50,100}
+
+#define DEFAULT_PWM_CONFIGS                     \
+   {                                            \
+      DEFAULT_PWM_CONFIG,                       \
+         DEFAULT_PWM_CONFIG,                    \
+         DEFAULT_PWM_CONFIG,                    \
+         DEFAULT_PWM_CONFIG                     \
+         }
 
 #define OBD2_CHANNELS 20
 
@@ -379,15 +390,15 @@ typedef struct _LapConfig{
 #define DEFAULT_LAP_TIME_CONFIG {"LapTime", "Min", 0, 0, SAMPLE_1Hz, 4}
 #define DEFAULT_SECTOR_CONFIG {"Sector", "", 0, 0, SAMPLE_1Hz, 4}
 #define DEFAULT_SECTOR_TIME_CONFIG {"SectorTime", "Min", 0, 0, SAMPLE_1Hz, 4}
-#define DEFAULT_PRED_TIME_CONFIG {"PredTime", "Min", 0, 0, SAMPLE_1Hz, 4}}
+#define DEFAULT_PRED_TIME_CONFIG {"PredTime", "Min", 0, 0, SAMPLE_1Hz, 4}
 
-#define DEFAULT_LAP_CONFIG { \
-   EMPTY_CHANNEL_CONFIG,     \
-   EMPTY_CHANNEL_CONFIG,     \
-   EMPTY_CHANNEL_CONFIG,     \
-   EMPTY_CHANNEL_CONFIG,     \
-   EMPTY_CHANNEL_CONFIG      \
-}
+#define DEFAULT_LAP_CONFIG {     \
+      DEFAULT_LAP_COUNT_CONFIG,  \
+         DEFAULT_LAP_TIME_CONFIG,               \
+         DEFAULT_SECTOR_CONFIG,                 \
+         DEFAULT_SECTOR_TIME_CONFIG,            \
+         DEFAULT_PRED_TIME_CONFIG               \
+         }
 
 typedef struct _TrackConfig{
 	float radius;

@@ -55,7 +55,7 @@ static ChannelSample* processChannelSampleWithFloatGetterNoarg(ChannelSample *s,
       return s;
 
    s->cfg = cfg;
-   s->sampleData = SampleData_Float;
+   s->sampleData = SampleData_Float_Noarg;
    s->get_float_sample_noarg = getter;
 
    return ++s;
@@ -68,7 +68,7 @@ static ChannelSample* processChannelSampleWithIntGetterNoarg(ChannelSample *s,
       return s;
 
    s->cfg = cfg;
-   s->sampleData = SampleData_Int;
+   s->sampleData = SampleData_Int_Noarg;
    s->get_int_sample_noarg = getter;
 
    return ++s;
@@ -81,7 +81,7 @@ static ChannelSample* processChannelSampleWithLongLongGetterNoarg(ChannelSample 
       return s;
 
    s->cfg = cfg;
-   s->sampleData = SampleData_LongLong;
+   s->sampleData = SampleData_LongLong_Noarg;
    s->get_longlong_sample_noarg = getter;
 
    return ++s;
@@ -297,8 +297,8 @@ int populate_sample_buffer(ChannelSample * samples,  size_t count, size_t curren
    for (size_t i = 0; i < count; i++, samples++) {
       const unsigned short sampleRate = samples->cfg->sampleRate;
 
-      // Zero out the sample for sanity
-      samples->valueLongLong = 0ll;
+      // NIL_SAMPLE the sample for sanity
+      samples->valueInt = NIL_SAMPLE;
 
       if (currentTicks % sampleRate != 0)
          continue;

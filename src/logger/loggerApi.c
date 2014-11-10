@@ -233,7 +233,7 @@ static void json_channelConfig(Serial *serial, ChannelConfig *cfg, int more) {
 	json_string(serial, "nm", cfg->label, 1);
 	json_string(serial, "ut", cfg->units, 1);
 	json_float(serial, "min", cfg->min, cfg->precision, 1);
-	json_float(serial, "min", cfg->max, cfg->precision, 1);
+	json_float(serial, "max", cfg->max, cfg->precision, 1);
         json_int(serial, "prec", (int) cfg->precision, 1);
 	json_int(serial, "sr", decodeSampleRate(cfg->sampleRate), more);
 }
@@ -924,25 +924,24 @@ static unsigned short getGpsConfigHighSampleRate(GPSConfig *cfg) {
 // STIEG: Change this or no?
 int api_getGpsConfig(Serial *serial, const jsmntok_t *json){
 
-	GPSConfig *gpsCfg = &(getWorkingLoggerConfig()->GPSConfigs);
+   GPSConfig *gpsCfg = &(getWorkingLoggerConfig()->GPSConfigs);
 
-	json_objStart(serial);
-	json_objStartString(serial, "gpsCfg");
+   json_objStart(serial);
+   json_objStartString(serial, "gpsCfg");
 
    unsigned short highestRate = getGpsConfigHighSampleRate(gpsCfg);
-	json_int(serial, "sr", decodeSampleRate(highestRate), 1);
+   json_int(serial, "sr", decodeSampleRate(highestRate), 1);
 
    const int posEnabled = gpsCfg->latitude.sampleRate != SAMPLE_DISABLED &&
       gpsCfg->longitude.sampleRate != SAMPLE_DISABLED;
-	json_int(serial, "pos",  posEnabled, 1);
+   json_int(serial, "pos",  posEnabled, 1);
+   json_int(serial, "speed", gpsCfg->speed.sampleRate != SAMPLE_DISABLED, 1);
+   json_int(serial, "dist", gpsCfg->distance.sampleRate != SAMPLE_DISABLED, 1);
+   json_int(serial, "sats", gpsCfg->satellites.sampleRate != SAMPLE_DISABLED, 0);
 
-	json_int(serial, "speed", gpsCfg->speed.sampleRate != SAMPLE_DISABLED, 1);
-	json_int(serial, "dist", gpsCfg->distance.sampleRate != SAMPLE_DISABLED, 1);
-	json_int(serial, "sats", gpsCfg->satellites.sampleRate != SAMPLE_DISABLED, 0);
-
-	json_objEnd(serial, 0);
-	json_objEnd(serial, 0);
-	return API_SUCCESS_NO_RETURN;
+   json_objEnd(serial, 0);
+   json_objEnd(serial, 0);
+   return API_SUCCESS_NO_RETURN;
 }
 
 static void gpsConfigTestAndSet(const jsmntok_t *json, ChannelConfig *cfg,

@@ -180,7 +180,7 @@ void LoggerApiTest::populateChannelConfig(ChannelConfig *cfg, const int i, const
    cfg->min = 0.1 + i;
    cfg->max = 100.1 + i;
    cfg->sampleRate = encodeSampleRate(splRt);
-   cfg->precision = (unsigned char) i;
+   cfg->precision = (unsigned char) i + 1;
 }
 
 void LoggerApiTest::checkChannelConfig(Object &json, const int i, string &iString, const int splRt) {
@@ -188,13 +188,13 @@ void LoggerApiTest::checkChannelConfig(Object &json, const int i, string &iStrin
    CPPUNIT_ASSERT_EQUAL(expNmStr, string((String)json["nm"]));
 
    string expUtStr = string("unit_") + iString;
-   CPPUNIT_ASSERT_EQUAL(expNmStr, string((String)json["ut"]));
+   CPPUNIT_ASSERT_EQUAL(expUtStr, string((String)json["ut"]));
 
    CPPUNIT_ASSERT_EQUAL(0.1f + i, (float)(Number)json["min"]);
    CPPUNIT_ASSERT_EQUAL(100.1f + i, (float)(Number)json["max"]);
-   CPPUNIT_ASSERT_EQUAL(100.1f + i, (float)(Number)json["max"]);
-   CPPUNIT_ASSERT_EQUAL(splRt, (int)(Number)json["prec"]);
-   CPPUNIT_ASSERT_EQUAL(i, (int)(Number)json["sr"]);
+
+   CPPUNIT_ASSERT_EQUAL(i + 1, (int)(Number)json["prec"]);
+   CPPUNIT_ASSERT_EQUAL(splRt, (int)(Number)json["sr"]);
 }
 
 void LoggerApiTest::testGetMultipleAnalogCfg(){
@@ -320,7 +320,7 @@ void LoggerApiTest::testSetAnalogConfigFile(string filename){
 
         ChannelConfig *cfg = &adcCfg->cfg;
         CPPUNIT_ASSERT_EQUAL(string("I <3 Racing"), string(cfg->label));
-        CPPUNIT_ASSERT_EQUAL(string("Pistons"), string(cfg->units));
+        CPPUNIT_ASSERT_EQUAL(string("Wheels"), string(cfg->units));
         CPPUNIT_ASSERT_EQUAL(-1.0f, cfg->min);
         CPPUNIT_ASSERT_EQUAL(1.0f, cfg->max);
 	CPPUNIT_ASSERT_EQUAL(50, decodeSampleRate(cfg->sampleRate));
@@ -755,9 +755,9 @@ void LoggerApiTest::testSetGpsConfigFile(string filename, unsigned char channels
 
         testChannelConfig(&gpsCfg->latitude, string("Latitude"), string("Degrees"), sampleRate);
         testChannelConfig(&gpsCfg->longitude, string("Longitude"), string("Degrees"), sampleRate);
-        testChannelConfig(&gpsCfg->longitude, string("Speed"), string("MPH"), sampleRate);
-        testChannelConfig(&gpsCfg->longitude, string("Distance"), string("Miles"), sampleRate);
-        testChannelConfig(&gpsCfg->longitude, string("GPSSats"), string(""), sampleRate);
+        testChannelConfig(&gpsCfg->speed, string("Speed"), string("MPH"), sampleRate);
+        testChannelConfig(&gpsCfg->distance, string("Distance"), string("Miles"), sampleRate);
+        testChannelConfig(&gpsCfg->satellites, string("GPSSats"), string(""), sampleRate);
 
 	assertGenericResponse(txBuffer, "setGpsCfg", API_SUCCESS);
 }
@@ -790,7 +790,6 @@ void LoggerApiTest::testGetGpsConfigFile(string filename){
 	CPPUNIT_ASSERT_EQUAL(1, (int)(Number)gpsCfgJson["pos"]);
 	CPPUNIT_ASSERT_EQUAL(1, (int)(Number)gpsCfgJson["sats"]);
 	CPPUNIT_ASSERT_EQUAL(1, (int)(Number)gpsCfgJson["speed"]);
-	CPPUNIT_ASSERT_EQUAL(1, (int)(Number)gpsCfgJson["time"]);
 }
 
 void LoggerApiTest::testGetGpsCfg(){

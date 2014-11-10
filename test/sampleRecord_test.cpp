@@ -120,7 +120,7 @@ void SampleRecordTest::testInitSampleRecord()
 {
    LoggerConfig *lc = getWorkingLoggerConfig();
 
-   size_t expectedEnabledChannels = 16;
+   size_t expectedEnabledChannels = 17;
 
    size_t channelCount = get_enabled_channel_count(lc);
    CPPUNIT_ASSERT_EQUAL(expectedEnabledChannels, channelCount);
@@ -151,8 +151,7 @@ void SampleRecordTest::testInitSampleRecord()
       ADCConfig *ac = &lc->ADCConfigs[i];
       if (ac->cfg.sampleRate != SAMPLE_DISABLED){
          CPPUNIT_ASSERT_EQUAL((size_t)i, ts->channelIndex);
-         CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
-         CPPUNIT_ASSERT_EQUAL(&ac->cfg, ts->cfg);
+         CPPUNIT_ASSERT_EQUAL((void *) &ac->cfg, (void *) ts->cfg);
          CPPUNIT_ASSERT_EQUAL((void *) get_analog_sample, (void *)ts->get_float_sample);
          CPPUNIT_ASSERT_EQUAL(SampleData_Float, ts->sampleData);
          ts++;
@@ -163,8 +162,7 @@ void SampleRecordTest::testInitSampleRecord()
       ImuConfig *ac = &lc->ImuConfigs[i];
       if (ac->cfg.sampleRate != SAMPLE_DISABLED){
          CPPUNIT_ASSERT_EQUAL((size_t)i,ts->channelIndex);
-         CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
-         CPPUNIT_ASSERT_EQUAL(&ac->cfg, ts->cfg);
+         CPPUNIT_ASSERT_EQUAL((void *) &ac->cfg, (void *) ts->cfg);
          CPPUNIT_ASSERT_EQUAL((void *)get_imu_sample, (void *)ts->get_float_sample);
          CPPUNIT_ASSERT_EQUAL(SampleData_Float, ts->sampleData);
          ts++;
@@ -175,8 +173,7 @@ void SampleRecordTest::testInitSampleRecord()
       TimerConfig *tc = &lc->TimerConfigs[i];
       if (tc->cfg.sampleRate != SAMPLE_DISABLED){
          CPPUNIT_ASSERT_EQUAL((size_t)i, ts->channelIndex);
-         CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
-         CPPUNIT_ASSERT_EQUAL(&tc->cfg, ts->cfg);
+         CPPUNIT_ASSERT_EQUAL((void *) &tc->cfg, (void *) ts->cfg);
          CPPUNIT_ASSERT_EQUAL((void *)get_timer_sample, (void *)ts->get_float_sample);
          CPPUNIT_ASSERT_EQUAL(SampleData_Float, ts->sampleData);
          ts++;
@@ -187,8 +184,7 @@ void SampleRecordTest::testInitSampleRecord()
       GPIOConfig *gc = &lc->GPIOConfigs[i];
       if (gc->cfg.sampleRate != SAMPLE_DISABLED){
          CPPUNIT_ASSERT_EQUAL((size_t)i, ts->channelIndex);
-         CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
-         CPPUNIT_ASSERT_EQUAL(&gc->cfg, ts->cfg);
+         CPPUNIT_ASSERT_EQUAL((void *) &gc->cfg, (void *) ts->cfg);
          CPPUNIT_ASSERT_EQUAL((void *) GPIO_get, (void *) ts->get_int_sample);
          CPPUNIT_ASSERT_EQUAL(SampleData_Int, ts->sampleData);
          ts++;
@@ -199,8 +195,7 @@ void SampleRecordTest::testInitSampleRecord()
       PWMConfig *pc = &lc->PWMConfigs[i];
       if (pc->cfg.sampleRate != SAMPLE_DISABLED){
          CPPUNIT_ASSERT_EQUAL((size_t)i, ts->channelIndex);
-         CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
-         CPPUNIT_ASSERT_EQUAL(&pc->cfg, ts->cfg);
+         CPPUNIT_ASSERT_EQUAL((void *) &pc->cfg, (void *) ts->cfg);
          CPPUNIT_ASSERT_EQUAL((void *)get_pwm_sample, (void *)ts->get_int_sample);
          CPPUNIT_ASSERT_EQUAL(SampleData_Int, ts->sampleData);
          ts++;
@@ -212,7 +207,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (gpsConfig->latitude.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &gpsConfig->latitude, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL((void *) getLatitude, (void *) ts->get_float_sample);
       CPPUNIT_ASSERT_EQUAL(SampleData_Float_Noarg, ts->sampleData);
       ts++;
@@ -220,7 +214,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (gpsConfig->longitude.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &gpsConfig->longitude, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL((void *) getLongitude, (void *) ts->get_float_sample);
       CPPUNIT_ASSERT_EQUAL(SampleData_Float_Noarg, ts->sampleData);
       ts++;
@@ -228,7 +221,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (gpsConfig->speed.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &gpsConfig->speed, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL((void *) getGpsSpeedInMph, (void *) ts->get_float_sample);
       CPPUNIT_ASSERT_EQUAL(SampleData_Float_Noarg, ts->sampleData);
       ts++;
@@ -236,7 +228,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (gpsConfig->distance.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &gpsConfig->distance, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL((void *) getGpsDistance, (void *) ts->get_float_sample);
       CPPUNIT_ASSERT_EQUAL(SampleData_Float_Noarg, ts->sampleData);
       ts++;
@@ -244,7 +235,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (gpsConfig->satellites.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &gpsConfig->satellites, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL((void *) getSatellitesUsedForPosition, (void *) ts->get_int_sample);
       CPPUNIT_ASSERT_EQUAL(SampleData_Int_Noarg, ts->sampleData);
       ts++;
@@ -253,7 +243,6 @@ void SampleRecordTest::testInitSampleRecord()
    LapConfig *lapConfig = &(lc->LapConfigs);
    if (lapConfig->lapCountCfg.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &lapConfig->lapCountCfg, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL(SampleData_Int_Noarg, ts->sampleData);
       CPPUNIT_ASSERT_EQUAL((void *) getLapCount, (void *) ts->get_int_sample);
       ts++;
@@ -261,7 +250,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (lapConfig->lapTimeCfg.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &lapConfig->lapTimeCfg, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL(SampleData_Float_Noarg, ts->sampleData);
       CPPUNIT_ASSERT_EQUAL((void *) getLastLapTimeInMinutes, (void *) ts->get_float_sample);
       ts++;
@@ -269,7 +257,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (lapConfig->sectorCfg.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &lapConfig->sectorCfg, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL(SampleData_Int_Noarg, ts->sampleData);
       CPPUNIT_ASSERT_EQUAL((void *) getLastSector, (void *) ts->get_int_sample);
       ts++;
@@ -277,7 +264,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (lapConfig->sectorTimeCfg.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &lapConfig->sectorTimeCfg, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL(SampleData_Float_Noarg, ts->sampleData);
       CPPUNIT_ASSERT_EQUAL((void *) getLastSectorTimeInMinutes, (void *) ts->get_float_sample);
       ts++;
@@ -285,7 +271,6 @@ void SampleRecordTest::testInitSampleRecord()
 
    if (lapConfig->predTimeCfg.sampleRate != SAMPLE_DISABLED){
       CPPUNIT_ASSERT_EQUAL((void *) &lapConfig->predTimeCfg, (void *) ts->cfg);
-      CPPUNIT_ASSERT_EQUAL(NIL_SAMPLE, ts->valueInt);
       CPPUNIT_ASSERT_EQUAL(SampleData_Float_Noarg, ts->sampleData);
       CPPUNIT_ASSERT_EQUAL((void *) getPredictedTimeInMinutes, (void *) ts->get_float_sample);
       ts++;
