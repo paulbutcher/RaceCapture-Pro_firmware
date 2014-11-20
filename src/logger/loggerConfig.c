@@ -241,52 +241,15 @@ int getConnectivitySampleRateLimit(){
 	return sampleRateLimit;
 }
 
-// STIEG: FIX ME! This can be done with math
-int encodeSampleRate(int sampleRate){
+int encodeSampleRate(const int sampleRate) {
+   if (sampleRate == 0)
+      return SAMPLE_DISABLED;
 
-	switch(sampleRate){
-		case 200:
-			return SAMPLE_200Hz;
-		case 100:
-			return SAMPLE_100Hz;
-		case 50:
-			return SAMPLE_50Hz;
-		case 25:
-			return SAMPLE_25Hz;
-		case 10:
-			return SAMPLE_10Hz;
-		case 5:
-			return SAMPLE_5Hz;
-		case 1:
-			return SAMPLE_1Hz;
-		default:
-		case 0:
-			return SAMPLE_DISABLED;
-	}
+   return  TICK_RATE_HZ / sampleRate;
 }
 
-// STIEG: FIX ME!  This can be done with math.
-int decodeSampleRate(int sampleRateCode){
-
-	switch(sampleRateCode){
-		case SAMPLE_200Hz:
-			return 200;
-		case SAMPLE_100Hz:
-			return 100;
-		case SAMPLE_50Hz:
-			return 50;
-		case SAMPLE_25Hz:
-			return 25;
-		case SAMPLE_10Hz:
-			return 10;
-		case SAMPLE_5Hz:
-			return 5;
-		case SAMPLE_1Hz:
-			return 1;
-		default:
-		case SAMPLE_DISABLED:
-			return 0;
-	}
+int decodeSampleRate(const int sampleRateCode) {
+   return encodeSampleRate(sampleRateCode);
 }
 
 unsigned char filterAnalogScalingMode(unsigned char mode){
