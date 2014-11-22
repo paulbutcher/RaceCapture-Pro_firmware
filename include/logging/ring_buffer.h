@@ -26,5 +26,6 @@ bool have_space(struct ring_buff *rb, size_t size);
 size_t put_data(struct ring_buff *rb, const void *data, size_t size);
 size_t dump_data(struct ring_buff *rb, size_t size);
 bool has_data(struct ring_buff *rb);
+struct ring_buff create_ring_buff(char* buff, size_t size);
 
 #endif /* __RING_BUFFER_H__ */

@@ -14,12 +14,7 @@
 static enum log_level curr_level = INFO;
 static char _log_buffer[LOG_BUFFER_SIZE];
 
-static struct ring_buff log_buff = {
-        .buf = _log_buffer,
-        .size = LOG_BUFFER_SIZE,
-        .head = _log_buffer,
-        .tail = _log_buffer
-};
+static struct ring_buff log_buff = create_ring_buff(_log_buffer, LOG_BUFFER_SIZE);
 static struct ring_buff * const lbp = &log_buff;
 
 size_t read_log_to_serial(Serial *s, int escape)

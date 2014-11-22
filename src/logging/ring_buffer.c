@@ -13,6 +13,17 @@ static size_t get_end_dist(struct ring_buff *rb, const char *p)
         return rb->buf + rb->size - p;
 }
 
+struct ring_buff create_ring_buff(char* buff, size_t size) {
+   struct ring_buff rb;
+
+   rb.buf = buff;
+   rb.size = size;
+   rb.head = buff;
+   rb.tail = buff;
+
+   return rb;
+}
+
 size_t get_space(struct ring_buff *rb)
 {
         int diff = rb->tail - rb->head;
