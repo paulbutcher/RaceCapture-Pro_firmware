@@ -211,13 +211,19 @@ void init_channel_sample_buffer(LoggerConfig *loggerConfig, ChannelSample * samp
    struct TimeConfig *tc = &(loggerConfig->TimeConfigs[0]);
    chanCfg = &(tc->cfg);
    // XXX: Special Trick -- Set highest sample rate here.
-   tc->cfg.sampleRate = highSampleRate;
+   // Put this IF check here so we can dsable this channel for testing if needed.
+   if (tc->cfg.sampleRate != SAMPLE_DISABLED)
+      tc->cfg.sampleRate = highSampleRate;
+
    sample = processChannelSampleWithIntGetterNoarg(sample, chanCfg, getUptimeAsInt);
 
    tc = &(loggerConfig->TimeConfigs[1]);
    chanCfg = &(tc->cfg);
    // XXX: Special Trick -- Set highest sample rate here.
-   tc->cfg.sampleRate = highSampleRate; // Set highest sample rate here.
+   // Put this IF check here so we can dsable this channel for testing if needed.
+   if (tc->cfg.sampleRate != SAMPLE_DISABLED)
+      tc->cfg.sampleRate = highSampleRate; // Set highest sample rate here.
+
    sample = processChannelSampleWithLongLongGetterNoarg(sample, chanCfg, getMillisSinceEpochAsLongLong);
 
 
