@@ -415,7 +415,7 @@ float getGpsDistance() {
 }
 
 void resetLapCount() {
-   g_lapCount = 0;
+   g_lapCount = -1;
 }
 
 int getLapCount() {
@@ -624,13 +624,13 @@ void initGPS() {
    g_atTarget = 0;
    g_prevAtTarget = 0;
    g_lastSectorTimestamp = 0;
-   g_lapCount = 0;
    g_distance = 0;
    g_sector = 0;
    g_lastSector = -1; // Indicates no previous sector.
    resetPredictiveTimer();
    g_dtFirstFix = g_dtLastFix = (DateTime) { 0 };
    g_uptimeAtSample = 0;
+   resetLapCount();
 }
 
 static void flashGpsStatusLed() {
@@ -692,7 +692,7 @@ void onLocationUpdated() {
           * FIXME: Special handling of fisrt start/finish crossing.  Needed
           * b/c launch control will delay the first launch notification
           */
-         if (getLapCount() == 0) {
+         if (getLapCount() == -1) {
             const GeoPoint sp = getStartPoint(g_activeTrack);
             // Distance is in KM
             g_distance = distPythag(&sp, &gp) / 1000;
